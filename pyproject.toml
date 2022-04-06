@@ -8,6 +8,7 @@ authors = ["Ross Parkin <ross.parkin@armakuni.com>"]
 python = "^3.9"
 pandas = "^1.4.1"
 scikit-learn = "^1.0.2"
+imblearn = "^0.0"
 
 [tool.poetry.dev-dependencies]
 black = "^22.1.0"

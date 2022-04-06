@@ -1,9 +1,11 @@
+from functools import total_ordering
 import logging
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from mlwrap.data.encoders import get_fitted_encoders, transform
+from mlwrap.data.sampling import resample_data
 from mlwrap.dto import MLSettings, DataDetails
 from mlwrap.enums import DataType, ProblemType
 
@@ -15,6 +17,8 @@ def split_data(
     shuffle: bool,
     problem_type: ProblemType,
 ):
+    if data is None:
+        raise ValueError("Data missing")
     if train_size >= 1.0:
         return data
 
@@ -51,13 +55,19 @@ def prepare_data(settings: MLSettings) -> DataDetails:
 
     encoders = get_fitted_encoders(df, settings)
 
+    problem_type = settings.get_problem_type()
     train, test = split_data(
         df,
         model_feature_id=settings.model_feature_id,
         train_size=settings.train_test_split,
         shuffle=settings.shuffle_before_splitting,
-        problem_type=settings.get_problem_type(),
+        problem_type=problem_type,
     )
+
+    # only resample the training set
+    train = resample_data(train, settings, problem_type)
+
+    total_row_count: int = train.shape[0] + test.shape[0]
 
     train_output = train.pop(settings.model_feature_id)
     train_input, encoded_feature_indices = transform(train, settings, encoders)
@@ -68,8 +78,11 @@ def prepare_data(settings: MLSettings) -> DataDetails:
     test_output, _ = transform(test_output, settings, encoders)
 
     return DataDetails(
+        encoders=encoders,
         train_input=train_input,
         train_output=train_output,
         test_input=test_input,
         test_output=test_output,
+        total_row_count=total_row_count,
+        encoded_feature_indices=encoded_feature_indices,
     )

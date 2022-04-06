@@ -110,6 +110,24 @@ class EncodedFeatureIndex:
         self.index_count = index_count
 
 
+class ColumnTransformer:
+    def __init__(self) -> None:
+        self.start_index: int = 0
+        self.encoded_feature_indices: List[Type[EncodedFeatureIndex]] = list()
+
+    def transform_column(
+        self, feature: Feature, column_data: np.ndarray, encoder: EncoderBase
+    ) -> np.ndarray:
+
+        transformed_data = encoder.transform(column_data)
+        n_columns = transformed_data.shape[1]
+        self.encoded_feature_indices.append(
+            EncodedFeatureIndex(feature.id, self.start_index, n_columns)
+        )
+        self.start_index = self.start_index + n_columns
+        return transformed_data
+
+
 def transform(
     data: Union[pd.DataFrame, pd.Series],
     settings: MLSettings,
@@ -140,27 +158,12 @@ def transform(
     return transformed_data, column_transformer.encoded_feature_indices
 
 
-class ColumnTransformer:
-    def __init__(self) -> None:
-        self.start_index: int = 0
-        self.encoded_feature_indices: List[Type[EncodedFeatureIndex]] = list()
-
-    def transform_column(
-        self, feature: Feature, column_data: np.ndarray, encoder: EncoderBase
-    ) -> np.ndarray:
-
-        transformed_data = encoder.transform(column_data)
-        n_columns = transformed_data.shape[1]
-        self.encoded_feature_indices.append(
-            EncodedFeatureIndex(feature.id, self.start_index, n_columns)
-        )
-        self.start_index = self.start_index + n_columns
-        return transformed_data
-
-
 def get_fitted_encoders(
     data: pd.DataFrame, settings: MLSettings
 ) -> Dict[str, EncoderBase]:
+    if data is None:
+        raise ValueError("data is missing")
+
     features = {feature.id: feature for feature in settings.features}
     encoders = {}
     for column in data.columns:
