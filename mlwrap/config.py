@@ -1,4 +1,4 @@
-from typing import List, Type, Union
+from typing import Dict, List, Type, Union
 import numpy as np
 
 import pandas as pd
@@ -59,7 +59,7 @@ class Feature:
         active: bool = True,
         encoder_type: EncoderType = None,
         handle_unknown: HandleUnknown = None,
-        default_value = None,
+        default_value=None,
         min_value: float = None,
         max_value: float = None,
         cyclical_period: float = None,
@@ -91,10 +91,13 @@ class Feature:
         self.model_labels = model_labels
         self.allowed_labels = allowed_labels
         self.other_label = other_label if other_label is not None else "OTHER"
-        self.keep_n_labels = max(
-            keep_n_labels, 0) if keep_n_labels is not None else 10
-        self.label_percentage_threshold = max(0, min(
-            label_percentage_threshold, 100)) if label_percentage_threshold is not None else 10
+        self.keep_n_labels = max(keep_n_labels, 0) if keep_n_labels is not None else 10
+        self.label_percentage_threshold = (
+            max(0, min(label_percentage_threshold, 100))
+            if label_percentage_threshold is not None
+            else 10
+        )
+
 
 class InputData:
     def __init__(
@@ -249,11 +252,6 @@ class ExplanationResult:
         self.feature_interactions = feature_interactions
 
 
-class TrainingResults:
-    def __init__(self, status: Status) -> None:
-        self.status = status
-
-
 class InferenceResult:
     def __init__(
         self,
@@ -295,3 +293,33 @@ class BackgroundDataDetail:
         self.id = id
         self.data = data
         self.path = path
+
+
+class TrainingResults:
+    def __init__(
+        self,
+        status: Status,
+        scores: List[Type[ModelScore]] = list(),
+        cleaning_report: CleaningReport = None,
+        encoder_details: List[Type[EncoderDetail]] = None,
+        model_details: ModelDetail = None,
+        features: List[Type[Feature]] = None,
+        model_bytes: bytes = None,
+        encoder_bytes: Dict[str, bytes] = None,
+        explanation_result: ExplanationResult = None,
+        background_data_detail: BackgroundDataDetail = None,
+        background_data_bytes: Dict[str, bytes] = None,
+    ) -> None:
+        self.status = status
+        self.scores = scores if scores is not None else list()
+        self.cleaning_report = cleaning_report
+        self.encoder_details = (
+            encoder_details if encoder_details is not None else list()
+        )
+        self.model_details = model_details if model_details is not None else list()
+        self.features = features if features is not None else list()
+        self.model_bytes = model_bytes
+        self.encoder_bytes = encoder_bytes
+        self.explanation_result = explanation_result
+        self.background_data_detail = background_data_detail
+        self.background_data_bytes = background_data_bytes

@@ -17,7 +17,6 @@ from mlwrap.config import (
     InferenceResult,
     MLConfig,
     ModelDetail,
-    ModelScore,
     TrainingResults,
 )
 from mlwrap.data.config import DataDetails
@@ -27,10 +26,11 @@ from mlwrap.enums import (
     EncoderType,
     Status,
 )
-from mlwrap.explainers import get_explainer
+from mlwrap.explainers import get_explainer, explain_model
 from mlwrap.explainers.base import ExplainerBase
 
 from mlwrap.io import save_pkl_bytes, load_pkl
+from mlwrap.scores import calculate_scores
 
 
 class AlgorithmBase(metaclass=abc.ABCMeta):
@@ -64,8 +64,6 @@ class AlgorithmBase(metaclass=abc.ABCMeta):
         self._model = None
         self.id: str = uuid.uuid1().hex
         self.iterations_: int = 0
-        self.scores: List[Type[ModelScore]] = list()
-        self.explanation_result: ExplanationResult = None
         self._stop_event: Event = stop_event
 
     def infer(self, data_details: DataDetails) -> InferenceOutput:
@@ -136,29 +134,40 @@ class AlgorithmBase(metaclass=abc.ABCMeta):
         )
 
     def get_training_results(self, data_details: DataDetails) -> TrainingResults:
+        scores = calculate_scores(
+            self._config, self.iterations_, self.predict, data_details
+        )
+
+        # explain the model
+        if self._config.explain:
+            explanation_result = explain_model(
+                config=self._config, algorithm=self, data_details=data_details
+            )
+        else:
+            explanation_result = None
+
         # save the models and encoders
         encoder_bytes = {self.id: data_details.get_encoder_bytes()}
-        model_bytes = {x.id: x.get_model_bytes() for x in self.algorithms}
+        model_bytes = self.get_model_bytes()
         background_data_bytes = {self.id: data_details.get_background_data_bytes()}
 
         # construct the results
         encoder_details: List[Type[EncoderDetail]] = [EncoderDetail(id=self.id)]
         model_details: List[Type[ModelDetail]] = [
-            ModelDetail(id=model.id, algorithm=model.algorithm)
-            for model in self.algorithms
+            ModelDetail(id=self.id, algorithm=self.algorithm)
         ]
         background_data_detail: BackgroundDataDetail = BackgroundDataDetail(id=self.id)
 
         return TrainingResults(
             status=Status.success,
             cleaning_report=data_details.cleaning_report,
-            scores=self.scores,
+            scores=scores,
             encoder_details=encoder_details,
             model_details=model_details,
             features=self._config.features,
             model_bytes=model_bytes,
             encoder_bytes=encoder_bytes,
-            explanation_result=self.explanation_result,
+            explanation_result=explanation_result,
             background_data_detail=background_data_detail,
             background_data_bytes=background_data_bytes,
         )

@@ -162,5 +162,5 @@ class TestPreparation(unittest.TestCase):
         class_ratios_ = get_class_ratios(df, config)
 
         # assert
-        one_third = 1. / 3.
+        one_third = 1.0 / 3.0
         self.assertTrue(all(cr == one_third for cr in class_ratios_.values()))

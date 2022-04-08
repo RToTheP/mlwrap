@@ -1,14 +1,31 @@
+import logging
 import unittest
+import pandas as pd
 
-from sklearn.datasets import load_iris
-
-from mlwrap.config import MLConfig
+from mlwrap.config import InputData, MLConfig
+from mlwrap.enums import DataType, Status
 from mlwrap.runners import train
+from tests.datasets import IrisDataset
 
 
 class TestTrain(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        logging.getLogger().setLevel(logging.DEBUG)
+        cls.iris = IrisDataset()
+
     def test_train(self):
-        df = load_iris(as_frame=True)
-        config = MLConfig(data_frame=df)
+        # arrange
+        df = pd.concat([self.iris.df_X, self.iris.df_y], axis=1)
+
+        config = MLConfig(
+            features=self.iris.features,
+            model_feature_id=self.iris.model_feature_id,
+            input_data=InputData(data_type=DataType.DataFrame, data_frame=df),
+        )
+
+        # act
         result = train(config=config)
-        #self.assertIsNotNone(result)
+
+        # assert
+        self.assertEqual(Status.success, result.status)

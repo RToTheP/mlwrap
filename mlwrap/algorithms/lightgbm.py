@@ -13,7 +13,6 @@ from mlwrap.data.config import DataDetails
 from mlwrap.data.preparation import get_validation_data, flatten_output_data
 from mlwrap.enums import ProblemType, AlgorithmType
 from mlwrap.explainers import explain_model
-from mlwrap.scores import calculate_scores
 
 
 class LightGBMWrapper(AlgorithmBase):
@@ -24,11 +23,10 @@ class LightGBMWrapper(AlgorithmBase):
     def __init__(
         self,
         config: MLConfig,
-        problem_type: ProblemType,
         stop_event: Event,
         alg_name: AlgorithmType,
     ):
-        super().__init__(config, problem_type, stop_event)
+        super().__init__(config, stop_event)
         self._alg_name = AlgorithmType[alg_name]
         if alg_name == AlgorithmType.LightGBMDecisionTree:
             self._boosting_type = "gbdt"
@@ -74,15 +72,6 @@ class LightGBMWrapper(AlgorithmBase):
             callbacks=[cb],
         )
         self.iterations_ = cb.iteration
-        self.scores = calculate_scores(
-            self._config, self.iterations_, self.predict, data_details
-        )
-
-        # explain the model
-        if self._config.explain:
-            self.explanation_result = explain_model(
-                config=self._config, algorithm=self, data_details=data_details
-            )
 
         return self.get_training_results(data_details=data_details)
 

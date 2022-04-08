@@ -39,6 +39,7 @@ class KerasNeuralNetwork(AlgorithmBase):
     def __init__(self, config: MLConfig, stop_event: Event):
         super().__init__(config, stop_event)
 
+
 #         # Check TensorFlow version
 #         logging.debug(f"TF version: {tf.version.VERSION}")
 
@@ -139,19 +140,6 @@ class KerasNeuralNetwork(AlgorithmBase):
 #             verbose=2,
 #         )
 #         self.iterations_ = len(self._model.history.epoch)
-#         self.scores = calculate_scores(
-#             settings=self._settings,
-#             problem_type=self._config.problem_type,
-#             iterations=self.iterations_,
-#             predict_fn=self.predict,
-#             data_details=data_details,
-#         )
-
-#         # explain the model
-#         # if self._config.explain:
-#         #     self.explanation_result = explain_model(
-#         #         settings=self._config, algorithm=self, data_details=data_details
-#         #     )
 
 #         return self.get_training_results(data_details=data_details)
 

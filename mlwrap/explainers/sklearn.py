@@ -21,7 +21,8 @@ class SklearnLinearModelExplainer(ExplainerBase):
 
         # sum the coefficients for the features using the encoded feature indices
         feature_importances: List[Type[FeatureImportance]] = get_feature_importances(
-            data_details=data_details, importances=coefficients)
+            data_details=data_details, importances=coefficients
+        )
         return ExplanationResult(feature_importances=feature_importances)
 
     def explain(self, data_details: DataDetails) -> List[Type[ExplanationResult]]:
@@ -32,8 +33,13 @@ class SklearnLinearModelExplainer(ExplainerBase):
         explanation_results: List[Type[ExplanationResult]] = list()
         for input_ in data_details.inference_input:
             importances = input_ * coefficients
-            explanation_results.append(ExplanationResult(feature_importances=get_feature_importances(
-                data_details=data_details, importances=importances)))
+            explanation_results.append(
+                ExplanationResult(
+                    feature_importances=get_feature_importances(
+                        data_details=data_details, importances=importances
+                    )
+                )
+            )
         return explanation_results
 
     def _get_coefficients(self):
@@ -56,7 +62,9 @@ class SklearnDecisionTreeExplainer(ExplainerBase):
 
         # sum the coefficients for the features using the encoded feature indices
         feature_importances: List[Type[FeatureImportance]] = get_feature_importances(
-            data_details=data_details, importances=self._algorithm._model.feature_importances_)
+            data_details=data_details,
+            importances=self._algorithm._model.feature_importances_,
+        )
         return ExplanationResult(feature_importances=feature_importances)
 
     def explain(self, data_details: DataDetails) -> List[Type[ExplanationResult]]:
@@ -66,6 +74,11 @@ class SklearnDecisionTreeExplainer(ExplainerBase):
         explanation_results: List[Type[ExplanationResult]] = list()
         for input_ in data_details.inference_input:
             importances = input_ * self._algorithm._model.feature_importances_
-            explanation_results.append(ExplanationResult(feature_importances=get_feature_importances(
-                data_details=data_details, importances=importances)))
+            explanation_results.append(
+                ExplanationResult(
+                    feature_importances=get_feature_importances(
+                        data_details=data_details, importances=importances
+                    )
+                )
+            )
         return explanation_results

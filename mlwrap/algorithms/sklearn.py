@@ -50,16 +50,6 @@ class SklearnLinearModel(AlgorithmBase):
         elif self._config.problem_type == ProblemType.Regression:
             self.iterations_ = 1  # doesn't mean anything for linear regression
 
-        self.scores = calculate_scores(
-            self._config, self.iterations_, self.predict, data_details
-        )
-
-        # explain the model
-        if self._config.explain:
-            self.explanation_result = explain_model(
-                config=self._config, algorithm=self, data_details=data_details
-            )
-
         return self.get_training_results(data_details=data_details)
 
     def predict(self, data):
@@ -96,16 +86,6 @@ class SklearnDecisionTree(AlgorithmBase):
 
         self._model.fit(data_details.train_input, train_output_flat)
         self.iterations_ = 1
-
-        self.scores = calculate_scores(
-            self._config, self.iterations_, self.predict, data_details
-        )
-
-        # explain the model
-        if self._config.explain:
-            self.explanation_result = explain_model(
-                config=self._config, algorithm=self, data_details=data_details
-            )
 
         return self.get_training_results(data_details=data_details)
 
