@@ -1,9 +1,11 @@
 from mlwrap.algorithms import AlgorithmBase, get_algorithm
-from mlwrap.data.preparation import prepare_data
-from mlwrap.dto import DataDetails, MLSettings, TrainingResults
+from mlwrap.config import  MLConfig, TrainingResults
+from mlwrap.data.config import DataDetails
+from mlwrap.data.preparation import prepare_training_data
 
 
-def train(settings: MLSettings) -> TrainingResults:
-    data_details: DataDetails = prepare_data(settings)
 
-    algorithm: AlgorithmBase = get_algorithm(settings=settings)
+def train(config: MLConfig) -> TrainingResults:
+    data_details: DataDetails = prepare_training_data(config)
+
+    algorithm: AlgorithmBase = get_algorithm(config=config)

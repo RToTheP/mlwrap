@@ -2,13 +2,13 @@ import numpy as np
 import pandas as pd
 import unittest
 
+from mlwrap.config import MLConfig
 from mlwrap.data.encoders import (
     CyclicalEncoder,
     TfidfEncoder,
     get_fitted_encoders,
     transform,
 )
-from mlwrap.dto import MLSettings
 from tests.datasets import IrisDataset
 
 
@@ -68,12 +68,12 @@ class TestEncoders(unittest.TestCase):
         # arrange
         df = pd.concat([self.iris.df_X, self.iris.df_y], axis=1)
 
-        settings = MLSettings(
+        config = MLConfig(
             features=self.iris.features, model_feature_id=self.iris.model_feature_id
         )
 
         # act
-        encoders = get_fitted_encoders(df, settings)
+        encoders = get_fitted_encoders(df, config)
 
         # assert
         self.assertEqual(len(self.iris.features), len(encoders))
@@ -81,24 +81,24 @@ class TestEncoders(unittest.TestCase):
 
     def test_get_fitted_encoders_no_data(self):
         # arrange
-        settings = MLSettings(
+        config = MLConfig(
             features=self.iris.features, model_feature_id=self.iris.model_feature_id
         )
 
         # act and assert
-        self.assertRaises(ValueError, get_fitted_encoders, None, settings)
+        self.assertRaises(ValueError, get_fitted_encoders, None, config)
 
     def test_transform(self):
         # arrange
         df = pd.concat([self.iris.df_X, self.iris.df_y], axis=1)
 
-        settings = MLSettings(
+        config = MLConfig(
             features=self.iris.features, model_feature_id=self.iris.model_feature_id
         )
 
         # act
-        encoders = get_fitted_encoders(df, settings)
-        encoded_data, encoded_feature_indices = transform(df, settings, encoders)
+        encoders = get_fitted_encoders(df, config)
+        encoded_data, encoded_feature_indices = transform(df, config, encoders)
 
         # assert
         self.assertEqual(df.shape[0], encoded_data.shape[0])
@@ -110,12 +110,12 @@ class TestEncoders(unittest.TestCase):
         # arrange
         df = pd.concat([self.iris.df_X, self.iris.df_y], axis=1)
 
-        settings = MLSettings(
+        config = MLConfig(
             features=self.iris.features, model_feature_id=self.iris.model_feature_id
         )
 
         # act
-        encoders = get_fitted_encoders(df, settings)
+        encoders = get_fitted_encoders(df, config)
 
         # assert
-        self.assertRaises(ValueError, transform, None, settings, encoders)
+        self.assertRaises(ValueError, transform, None, config, encoders)

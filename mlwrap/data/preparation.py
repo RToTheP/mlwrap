@@ -1,13 +1,17 @@
-from functools import total_ordering
 import logging
+from typing import Dict, Tuple
+import numpy as np
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
+from sklearn.utils import class_weight
 
+from mlwrap.config import CleaningReport, MLConfig
+from mlwrap.data.cleaning import clean_training_data
+from mlwrap.data.config import DataDetails
 from mlwrap.data.encoders import get_fitted_encoders, transform
-from mlwrap.data.sampling import resample_data
-from mlwrap.dto import MLSettings, DataDetails
-from mlwrap.enums import DataType, ProblemType
+from mlwrap.data.sampling import get_background_data, resample_data
+from mlwrap.enums import DataType, ProblemType, Status
 
 
 def split_data(
@@ -32,8 +36,8 @@ def split_data(
     return split_data
 
 
-def get_data(settings: MLSettings) -> pd.DataFrame:
-    input_data = settings.input_data
+def get_data(config: MLConfig) -> pd.DataFrame:
+    input_data = config.input_data
     if input_data is None:
         logging.error("Input data missing")
         return None
@@ -48,41 +52,104 @@ def get_data(settings: MLSettings) -> pd.DataFrame:
     raise NotImplementedError
 
 
-def prepare_data(settings: MLSettings) -> DataDetails:
-    df = get_data(settings)
+def prepare_training_data(config: MLConfig) -> DataDetails:
+    df = get_data(config)
     if df is None:
-        return None
+        return DataDetails(status=Status.invalid_data)
 
-    encoders = get_fitted_encoders(df, settings)
+    tup: Tuple[Status, pd.DataFrame, CleaningReport] = clean_training_data(df, config)
+    status: Status = tup[0]
+    data: pd.DataFrame = tup[1]
+    cleaning_report: CleaningReport = tup[2]
+    if status != Status.success:
+        return DataDetails(status=status)
 
-    problem_type = settings.get_problem_type()
+    encoders = get_fitted_encoders(df, config)
+
+    problem_type = config.problem_type
     train, test = split_data(
         df,
-        model_feature_id=settings.model_feature_id,
-        train_size=settings.train_test_split,
-        shuffle=settings.shuffle_before_splitting,
+        model_feature_id=config.model_feature_id,
+        train_size=config.train_test_split,
+        shuffle=config.shuffle_before_splitting,
         problem_type=problem_type,
     )
 
     # only resample the training set
-    train = resample_data(train, settings, problem_type)
+    train = resample_data(train, config, problem_type)
 
+    if problem_type == ProblemType.Classification:
+        class_weights = get_class_weights(train, config)
+        class_ratios: Dict[str, float] = get_class_ratios(train, config)
+    else:
+        class_weights = class_ratios = None
     total_row_count: int = train.shape[0] + test.shape[0]
 
-    train_output = train.pop(settings.model_feature_id)
-    train_input, encoded_feature_indices = transform(train, settings, encoders)
-    train_output, _ = transform(train_output, settings, encoders)
+    train_output = train.pop(config.model_feature_id)
+    train_input, encoded_feature_indices = transform(train, config, encoders)
+    train_output, _ = transform(train_output, config, encoders)
 
-    test_output = test.pop(settings.model_feature_id)
-    test_input, _ = transform(test, settings, encoders)
-    test_output, _ = transform(test_output, settings, encoders)
+    test_output = test.pop(config.model_feature_id)
+    test_input, _ = transform(test, config, encoders)
+    test_output, _ = transform(test_output, config, encoders)
+
+    background_data = get_background_data(train_input, config)
 
     return DataDetails(
+        status=status,
+        cleaning_report=cleaning_report,
         encoders=encoders,
         train_input=train_input,
         train_output=train_output,
         test_input=test_input,
         test_output=test_output,
+        class_weights=class_weights,
+        class_ratios=class_ratios,
         total_row_count=total_row_count,
         encoded_feature_indices=encoded_feature_indices,
+        background_data=background_data,
     )
+
+
+def get_class_ratios(data, config: MLConfig) -> Dict[str, float]:
+    value_counts_ = pd.value_counts(data[config.model_feature_id])
+    value_counts_.sort_values(ascending=False, inplace=True)
+    total_counts = np.size(data[config.model_feature_id])
+    class_ratio_ = {
+        x: value_counts_[x] / int(total_counts) for x in value_counts_.index
+    }
+    return class_ratio_
+
+
+def get_class_weights(data: pd.DataFrame, config: MLConfig) -> np.ndarray:
+    # class weights can be used to adjust the loss to compensate for class imbalance in the data, e.g. an imbalance of 80:20 would mean we want weights of 1:4 (or 0.25:1 to keep weights lower)
+    # e.g. classWeights = { 0:0.25, 1: 1.}
+    column_data = data[config.model_feature_id]
+    return class_weight.compute_class_weight(
+        "balanced", classes=np.unique(column_data), y=column_data
+    )
+
+
+def get_validation_data(input, output):
+    if (
+        input is not None
+        and output is not None
+        and input.shape[0] > 0
+        and output.shape[0] > 0
+    ):
+        return input, output
+    return None
+
+
+def flatten_output_data(problem_type: ProblemType, train_output, test_output=None):
+    if problem_type == ProblemType.Classification:
+        # classification problem so flatten the output array
+        train_output = np.argmax(train_output, axis=1)
+        if test_output is not None:
+            test_output = np.argmax(test_output, axis=1)
+    elif problem_type == ProblemType.Regression:
+        train_output = np.squeeze(train_output, axis=1)
+        if test_output is not None:
+            test_output = np.squeeze(test_output, axis=1)
+
+    return train_output, test_output

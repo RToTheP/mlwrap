@@ -1,6 +1,6 @@
 from sklearn.datasets import load_iris
 
-from mlwrap.dto import Feature
+from mlwrap.config import Feature
 from mlwrap.enums import FeatureType
 
 
@@ -8,6 +8,7 @@ class IrisDataset:
     iris = load_iris(as_frame=True)
     df_X = iris["data"]
     df_y = iris["target"]
+    target_names = iris["target_names"]
     target_count = len(iris["target_names"])
     model_feature_id = "target"
     features = [

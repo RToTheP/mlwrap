@@ -10,7 +10,7 @@ from sklearn.feature_extraction import FeatureHasher
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import OneHotEncoder, MinMaxScaler
 
-from mlwrap.dto import Feature, MLSettings
+from mlwrap.config import Feature, MLConfig
 from mlwrap.enums import EncoderType, FeatureType
 
 
@@ -130,10 +130,13 @@ class ColumnTransformer:
 
 def transform(
     data: Union[pd.DataFrame, pd.Series],
-    settings: MLSettings,
+    config: MLConfig,
     encoders: Dict[str, EncoderBase],
 ) -> Tuple[np.ndarray, List[Type[EncodedFeatureIndex]]]:
-    feature_dct = {feature.id: feature for feature in settings.features}
+    if data is None:
+        raise ValueError("data is missing")
+
+    feature_dct = {feature.id: feature for feature in config.features}
     features = []
     columnData = []
     encodersList = []
@@ -158,13 +161,11 @@ def transform(
     return transformed_data, column_transformer.encoded_feature_indices
 
 
-def get_fitted_encoders(
-    data: pd.DataFrame, settings: MLSettings
-) -> Dict[str, EncoderBase]:
+def get_fitted_encoders(data: pd.DataFrame, config: MLConfig) -> Dict[str, EncoderBase]:
     if data is None:
         raise ValueError("data is missing")
 
-    features = {feature.id: feature for feature in settings.features}
+    features = {feature.id: feature for feature in config.features}
     encoders = {}
     for column in data.columns:
         feature = features[column]
