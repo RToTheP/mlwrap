@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "ml-wrap"
+name = "mlwrap"
 version = "0.1.0"
 description = ""
 authors = ["Ross Parkin <ross.parkin@armakuni.com>"]
