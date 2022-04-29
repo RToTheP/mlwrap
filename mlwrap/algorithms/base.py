@@ -23,7 +23,6 @@ from mlwrap.data.config import DataDetails
 from mlwrap.enums import (
     AlgorithmType,
     EncoderType,
-    EncoderType,
     Status,
 )
 from mlwrap.explainers import get_explainer, explain_model

@@ -12,7 +12,7 @@ from sklearn.metrics import (
     mean_squared_error,
 )
 
-from mlwrap.config import MLConfig, ModelScore
+from mlwrap.config import ExplanationResult, MLConfig, ModelScore
 from mlwrap.data.config import DataDetails
 from mlwrap.data.encoders import EncoderBase
 from mlwrap.enums import ProblemType, ScoreType
@@ -202,23 +202,30 @@ def calculate_scores(
     return scores
 
 
-def print_scores(scores: List[Type[ModelScore]]):
+def print_scores(scores: List[Type[ModelScore]]) -> pd.DataFrame:
     if scores is None:
-        return
+        return None
     logging.info("Scores:")
-    colname = []
-    rowname = []
-    vals = []
-    first = True
-    for m in scores:
-        valrow = [m.value]
-        if first:
-            colname.append("value")
-        rowname.append(m.id.name)
-        if m.av is not None:
-            if first:
-                colname.extend(["av", "min", "max", "std", "std_av"])
-            valrow.extend([m.av, m.min, m.max, m.std, m.std_av])
-        first = False
-        vals.append(valrow)
-    logging.info(pd.DataFrame(vals, rowname, colname))
+    colname = ["value"]
+    if scores[0].av is not None:
+        colname.extend(["av", "min", "max", "std", "std_av"])
+    rowname = [s.id.name for s in scores]
+    vals = [
+        [m.value] if m.av is None else [m.value, m.av, m.min, m.max, m.std, m.std_av]
+        for m in scores
+    ]
+    df = pd.DataFrame(vals, rowname, colname)
+    logging.info(df)
+    return df
+
+
+def print_explanation_result(result: ExplanationResult) -> pd.DataFrame:
+    if result is None:
+        return None
+    logging.info("Feature Importances:")
+    colname = ["value"]
+    rowname = [fi.feature_id for fi in result.feature_importances]
+    vals = [[fi.value] for fi in result.feature_importances]
+    df = pd.DataFrame(vals, rowname, colname)
+    logging.info(df)
+    return df
