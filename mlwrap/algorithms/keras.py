@@ -149,7 +149,9 @@ class KerasNeuralNetwork(AlgorithmBase):
 
     def get_model_bytes(self) -> bytes:
         binary_image = None
-        with File("does not matter", mode="w", driver="core", backing_store=False) as h5file:
+        with File(
+            "does not matter", mode="w", driver="core", backing_store=False
+        ) as h5file:
             self._model.save(h5file)
             # Very important! Otherwise you get all zeroes below.
             h5file.flush()
