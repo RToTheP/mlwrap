@@ -1,4 +1,4 @@
-from typing import Dict, List, Type, Union
+from typing import Dict, List, Tuple, Type, Union
 import numpy as np
 
 import pandas as pd
@@ -182,20 +182,11 @@ class CleaningReport:
         self.cleaning_records = [*self.cleaning_records, *cleaning_records]
 
 
-class FeatureInteraction:
-    def __init__(
-        self, feature_id1: str = None, feature_id2: str = None, value: float = None
-    ):
-        self.feature_id1 = feature_id1
-        self.feature_id2 = feature_id2
-        self.value = value
-
-
 class ExplanationResult:
     def __init__(
         self,
         feature_importances: Dict[str, float] = None,
-        feature_interactions: List[Type[FeatureInteraction]] = None,
+        feature_interactions: Dict[Tuple[str,str], float] = None,
     ):
         self.feature_importances = feature_importances
         self.feature_interactions = feature_interactions

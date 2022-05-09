@@ -102,7 +102,7 @@ class TestTrain(unittest.TestCase):
         self.assertEqual(Status.success, result.status)
         self.assertIsNotNone(result.model_bytes)
         self.assertEqual(df.shape[0], result.scores[ScoreType.total_row_count])
-        self.assertTrue(result.scores[ScoreType.mean_absolute_error] < 60)
+        self.assertTrue(result.scores[ScoreType.mean_absolute_error] < 70)
 
     def test_xtrain_lightgbm_decision_tree_regression(self):
         # arrange
@@ -123,7 +123,7 @@ class TestTrain(unittest.TestCase):
         self.assertEqual(Status.success, result.status)
         self.assertIsNotNone(result.model_bytes)
         self.assertEqual(df.shape[0], result.scores[ScoreType.total_row_count])
-        self.assertTrue(result.scores[ScoreType.mean_absolute_error] < 60)
+        self.assertTrue(result.scores[ScoreType.mean_absolute_error] < 70)
         self.assertEqual(
             len(config.features) - 1, len(result.explanation_result.feature_importances)
         )
