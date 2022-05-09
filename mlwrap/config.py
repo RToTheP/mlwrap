@@ -182,12 +182,6 @@ class CleaningReport:
         self.cleaning_records = [*self.cleaning_records, *cleaning_records]
 
 
-class FeatureImportance:
-    def __init__(self, feature_id: str = None, value: float = None):
-        self.feature_id = feature_id
-        self.value = value
-
-
 class FeatureInteraction:
     def __init__(
         self, feature_id1: str = None, feature_id2: str = None, value: float = None
@@ -200,7 +194,7 @@ class FeatureInteraction:
 class ExplanationResult:
     def __init__(
         self,
-        feature_importances: List[Type[FeatureImportance]] = None,
+        feature_importances: Dict[str, float] = None,
         feature_interactions: List[Type[FeatureInteraction]] = None,
     ):
         self.feature_importances = feature_importances

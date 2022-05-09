@@ -197,8 +197,8 @@ def print_explanation_result(result: ExplanationResult) -> pd.DataFrame:
         return None
     logging.info("Feature Importances:")
     colname = ["value"]
-    rowname = [fi.feature_id for fi in result.feature_importances]
-    vals = [[fi.value] for fi in result.feature_importances]
+    rowname = [fi for fi in result.feature_importances]
+    vals = [[value] for value in result.feature_importances.values()]
     df = pd.DataFrame(vals, rowname, colname)
     logging.info(df)
     return df

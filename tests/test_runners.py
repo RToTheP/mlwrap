@@ -80,14 +80,9 @@ class TestTrain(unittest.TestCase):
             len(config.features) - 1, len(result.explanation_result.feature_importances)
         )
         self.assertTrue(
-            any(fi.value > 0 for fi in result.explanation_result.feature_importances)
+            any(value > 0 for value in result.explanation_result.feature_importances.values())
         )
-        petal_length_importance = [
-            fi.value
-            for fi in result.explanation_result.feature_importances
-            if fi.feature_id == "petal length (cm)"
-        ][0]
-        self.assertEqual(1, petal_length_importance)
+        self.assertEqual(1, result.explanation_result.feature_importances["petal length (cm)"])
 
     def test_train_lightgbm_decision_tree_regression(self):
         # arrange
@@ -133,14 +128,9 @@ class TestTrain(unittest.TestCase):
             len(config.features) - 1, len(result.explanation_result.feature_importances)
         )
         self.assertTrue(
-            any(fi.value > 0 for fi in result.explanation_result.feature_importances)
+            any(value > 0 for value in result.explanation_result.feature_importances.values())
         )
-        s5_importance = [
-            fi.value
-            for fi in result.explanation_result.feature_importances
-            if fi.feature_id == "s5"
-        ][0]
-        self.assertEqual(1, s5_importance)
+        self.assertEqual(1, result.explanation_result.feature_importances["s5"])
 
     def test_train_keras_neural_network_classification(self):
         # arrange

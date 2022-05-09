@@ -3,7 +3,7 @@ from typing import List, Type
 import numpy as np
 
 from mlwrap.enums import ProblemType, AlgorithmType
-from mlwrap.config import ExplanationResult, FeatureImportance
+from mlwrap.config import ExplanationResult
 from mlwrap.data.config import DataDetails
 from mlwrap.explainers.base import get_feature_importances, ExplainerBase
 
@@ -20,7 +20,7 @@ class SklearnLinearModelExplainer(ExplainerBase):
         coefficients = self._get_coefficients()
 
         # sum the coefficients for the features using the encoded feature indices
-        feature_importances: List[Type[FeatureImportance]] = get_feature_importances(
+        feature_importances = get_feature_importances(
             data_details=data_details, importances=coefficients
         )
         return ExplanationResult(feature_importances=feature_importances)
@@ -61,7 +61,7 @@ class SklearnDecisionTreeExplainer(ExplainerBase):
         self._is_valid()
 
         # sum the coefficients for the features using the encoded feature indices
-        feature_importances: List[Type[FeatureImportance]] = get_feature_importances(
+        feature_importances = get_feature_importances(
             data_details=data_details,
             importances=self._algorithm._model.feature_importances_,
         )

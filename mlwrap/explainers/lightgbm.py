@@ -1,7 +1,7 @@
 from typing import List, Type
 
 from mlwrap.enums import AlgorithmType
-from mlwrap.config import ExplanationResult, FeatureImportance
+from mlwrap.config import ExplanationResult
 from mlwrap.data.config import DataDetails
 from mlwrap.explainers.base import get_feature_importances, ExplainerBase
 
@@ -18,7 +18,7 @@ class LightGBMExplainer(ExplainerBase):
         self._is_valid()
 
         # sum the coefficients for the features using the encoded feature indices
-        feature_importances: List[Type[FeatureImportance]] = get_feature_importances(
+        feature_importances = get_feature_importances(
             data_details=data_details,
             importances=self._algorithm._model.feature_importances_,
         )

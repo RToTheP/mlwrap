@@ -4,7 +4,7 @@ from typing import List, Type, Union
 import numpy as np
 import shap
 
-from mlwrap.config import ExplanationResult, FeatureImportance
+from mlwrap.config import ExplanationResult
 from mlwrap.data.config import DataDetails
 from mlwrap.explainers.base import get_feature_importances, ExplainerBase
 
@@ -35,7 +35,7 @@ class SHAPExplainerBase(ExplainerBase, metaclass=abc.ABCMeta):
             importances = np.average(importances, axis=0)
         importances = np.average(importances, axis=0)
 
-        feature_importances: List[Type[FeatureImportance]] = get_feature_importances(
+        feature_importances = get_feature_importances(
             data_details=data_details, importances=importances
         )
 

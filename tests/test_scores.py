@@ -6,7 +6,6 @@ import numpy as np
 from mlwrap.config import (
     ExplanationResult,
     Feature,
-    FeatureImportance,
     MLConfig,
 )
 from mlwrap.enums import FeatureType, ScoreType
@@ -30,10 +29,7 @@ class TestScores(unittest.TestCase):
     def test_print_explanation_result(self):
         # arrange
         explanation_result = ExplanationResult(
-            feature_importances=[
-                FeatureImportance(feature_id="Colour", value=0.5),
-                FeatureImportance(feature_id="Temperature", value=0.2),
-            ]
+            feature_importances = { "Colour" : 0.5, "Temperature" : 0.2 }
         )
         # act
         df = print_explanation_result(explanation_result)

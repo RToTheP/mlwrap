@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import abc
-from typing import List, Type, TYPE_CHECKING
+from typing import Dict, List, Type, TYPE_CHECKING
 
 import numpy as np
 
@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from mlwrap.algorithms.base import AlgorithmBase
 
 from mlwrap.data.config import DataDetails
-from mlwrap.config import ExplanationResult, FeatureImportance, MLConfig
+from mlwrap.config import ExplanationResult, MLConfig
 
 
 class ExplainerBase(metaclass=abc.ABCMeta):
@@ -38,7 +38,7 @@ class ExplainerBase(metaclass=abc.ABCMeta):
 
 def get_feature_importances(
     data_details: DataDetails, importances: np.ndarray, normalize: bool = True
-):
+) -> Dict[str, float]:
     # sum the coefficients for the features using the encoded feature indices
     importances_ = [
         np.sum(importances[x.start_index : x.start_index + x.index_count])
@@ -49,10 +49,9 @@ def get_feature_importances(
     if normalize:
         importances_ = normalize_abs_values(importances_)
 
-    feature_importances: List[Type[FeatureImportance]] = [
-        FeatureImportance(feature_id=feature_id, value=importance)
-        for feature_id, importance in zip(features, importances_)
-    ]
+    feature_importances = {
+        feature_id: importance for feature_id, importance in zip(features, importances_)
+    }
 
     return feature_importances
 
