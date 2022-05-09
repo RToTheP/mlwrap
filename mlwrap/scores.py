@@ -12,7 +12,7 @@ from sklearn.metrics import (
     mean_squared_error,
 )
 
-from mlwrap.config import ExplanationResult, MLConfig, ModelScore
+from mlwrap.config import ExplanationResult, MLConfig
 from mlwrap.data.config import DataDetails
 from mlwrap.data.encoders import EncoderBase
 from mlwrap.enums import ProblemType, ScoreType
@@ -24,12 +24,12 @@ def get_scores(
     inputs: np.ndarray,
     actuals: np.ndarray,
     encoders: Dict[str, EncoderBase],
-):
+) -> Dict[Type[ScoreType], float]:
     # note that some metrics are calculated using different averging methods so that we can get aa different view of the data in the resulting single value
     # 'macro' means calculate metrics for each label, and find their unweighted mean. This does not take label imbalance into account but rather treats each class equally.
     # 'weighted' means that we weight each class contribution with the number of records. This means that if the data is imbalanced the majority class will dominate the average
 
-    scores: List[Type[ModelScore]] = list()
+    scores = {}
     if config.problem_type == ProblemType.Classification:
         # predict probabilities for test set
         predicted_probabilities: np.ndarray = predict_fn(inputs)
@@ -47,19 +47,12 @@ def get_scores(
 
         # accuracy: (tp + tn) / (p + n)
         # # NOTE: weighted recall is equivalent to accuracy: (tp + tn) / (p + n)
-        scores.append(
-            ModelScore(
-                ScoreType.recall_weighted, accuracy_score(actuals, predicted_classes)
-            )
-        )
+        scores[ScoreType.recall_weighted] = accuracy_score(actuals, predicted_classes)
 
         if n_actual_classes > 1:
             # NOTE: macro recall is equivalent to balanced accuracy (the average of recall on classes)
-            scores.append(
-                ModelScore(
-                    ScoreType.recall_macro,
-                    balanced_accuracy_score(actuals, predicted_classes),
-                )
+            scores[ScoreType.recall_macro] = balanced_accuracy_score(
+                actuals, predicted_classes
             )
 
             # precision tp / (tp + fp)
@@ -70,8 +63,8 @@ def get_scores(
                 precision, _, f1, _ = precision_recall_fscore_support(
                     actuals, predicted_classes, average=av
                 )
-                scores.append(ModelScore(ScoreType["precision_" + av], precision))
-                scores.append(ModelScore(ScoreType["f1_" + av], f1))
+                scores[ScoreType["precision_" + av]] = precision
+                scores[ScoreType["f1_" + av]] = f1
 
             # ROC AUC
             # return macro and weighted auc values. The snag here is that sklearn averaging ignores binary classes
@@ -107,10 +100,10 @@ def get_scores(
             roc_auc_weighted = roc_auc_weighted / sum(supports)
             pr_auc_macro = pr_auc_macro / n_actual_classes
             pr_auc_weighted = pr_auc_weighted / sum(supports)
-            scores.append(ModelScore(ScoreType.roc_auc_weighted, roc_auc_weighted))
-            scores.append(ModelScore(ScoreType.roc_auc_macro, roc_auc_macro))
-            scores.append(ModelScore(ScoreType.pr_auc_weighted, pr_auc_weighted))
-            scores.append(ModelScore(ScoreType.pr_auc_macro, pr_auc_macro))
+            scores[ScoreType.roc_auc_weighted] = roc_auc_weighted
+            scores[ScoreType.roc_auc_macro] = roc_auc_macro
+            scores[ScoreType.pr_auc_weighted] = pr_auc_weighted
+            scores[ScoreType.pr_auc_macro] = pr_auc_macro
         else:
             logging.warning(
                 f"There must be more than one class in both actuals and predictions"
@@ -126,22 +119,13 @@ def get_scores(
         pred_values = encoder.inverse_transform(pred_values)
         actuals = encoder.inverse_transform(actuals)
 
-        scores.append(
-            ModelScore(
-                ScoreType.mean_absolute_error, mean_absolute_error(actuals, pred_values)
-            )
+        scores[ScoreType.mean_absolute_error] = mean_absolute_error(
+            actuals, pred_values
         )
-        scores.append(
-            ModelScore(
-                ScoreType.median_absolute_error,
-                median_absolute_error(actuals, pred_values),
-            )
+        scores[ScoreType.median_absolute_error] = median_absolute_error(
+            actuals, pred_values
         )
-        scores.append(
-            ModelScore(
-                ScoreType.mean_squared_error, mean_squared_error(actuals, pred_values)
-            )
-        )
+        scores[ScoreType.mean_squared_error] = mean_squared_error(actuals, pred_values)
     else:
         raise NotImplementedError
 
@@ -153,67 +137,56 @@ def calculate_scores(
     iterations: int,
     predict_fn: Callable[[np.ndarray], np.ndarray],
     data_details: DataDetails,
-) -> List[ModelScore]:
+) -> Dict[Type[ScoreType], float]:
     # evaluate metrics
     n_active_features: int = len([x for x in config.features if x.active])
-    scores: List[Type[ModelScore]] = [
-        ModelScore(ScoreType.iterations, int(iterations)),
-        ModelScore(ScoreType.total_row_count, data_details.total_row_count),
-        ModelScore(ScoreType.active_feature_count, n_active_features),
-        ModelScore(
-            ScoreType.inactive_feature_count, len(config.features) - n_active_features
-        ),
-    ]
+    scores = {
+        ScoreType.iterations: int(iterations),
+        ScoreType.total_row_count: data_details.total_row_count,
+        ScoreType.active_feature_count: n_active_features,
+        ScoreType.inactive_feature_count: len(config.features) - n_active_features,
+    }
 
     if config.problem_type == ProblemType.Classification:
-        scores.append(
-            ModelScore(
-                ScoreType.majority_class_fraction,
-                float(list(data_details.class_ratios.values())[0]),
-            )
+        scores[ScoreType.majority_class_fraction] = float(
+            list(data_details.class_ratios.values())[0]
         )
-        scores.append(
-            ModelScore(
-                ScoreType.minority_class_fraction,
-                float(list(data_details.class_ratios.values())[-1]),
-            )
+        scores[ScoreType.minority_class_fraction] = (
+            float(list(data_details.class_ratios.values())[-1]),
         )
 
     if data_details.test_input is not None:
-        scores.extend(
-            get_scores(
+        scores = {
+            **scores,
+            **get_scores(
                 config,
                 predict_fn,
                 data_details.test_input,
                 data_details.test_output,
                 data_details.encoders,
-            )
-        )
+            ),
+        }
     else:
-        scores.extend(
-            get_scores(
+        scores = {
+            **scores,
+            **get_scores(
                 config,
                 predict_fn,
                 data_details.train_input,
                 data_details.train_output,
                 data_details.encoders,
-            )
-        )
+            ),
+        }
     return scores
 
 
-def print_scores(scores: List[Type[ModelScore]]) -> pd.DataFrame:
+def print_scores(scores: Dict[Type[ScoreType], float]) -> pd.DataFrame:
     if scores is None:
         return None
     logging.info("Scores:")
     colname = ["value"]
-    if scores[0].av is not None:
-        colname.extend(["av", "min", "max", "std", "std_av"])
-    rowname = [s.id.name for s in scores]
-    vals = [
-        [m.value] if m.av is None else [m.value, m.av, m.min, m.max, m.std, m.std_av]
-        for m in scores
-    ]
+    rowname = [s.name for s in scores]
+    vals = [[s] for s in scores.values()]
     df = pd.DataFrame(vals, rowname, colname)
     logging.info(df)
     return df

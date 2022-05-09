@@ -33,9 +33,10 @@ class TestTrain(unittest.TestCase):
         # assert
         self.assertEqual(Status.success, training_results.status)
         self.assertIsNotNone(training_results.model_bytes)
-        dct_scores = {s.id.name: s.value for s in training_results.scores}
-        self.assertEqual(df.shape[0], dct_scores[ScoreType.total_row_count])
-        self.assertTrue(dct_scores[ScoreType.recall_weighted] > 0.8)
+        self.assertEqual(
+            df.shape[0], training_results.scores[ScoreType.total_row_count]
+        )
+        self.assertTrue(training_results.scores[ScoreType.recall_weighted] > 0.8)
 
         # inference
         # act
@@ -50,7 +51,10 @@ class TestTrain(unittest.TestCase):
 
         # assert
         self.assertEqual(n_inferences, len(inference_output.inference_results))
-        self.assertEqual(self.iris.target_count, len(inference_output.inference_results[0].probabilities))
+        self.assertEqual(
+            self.iris.target_count,
+            len(inference_output.inference_results[0].probabilities),
+        )
 
     def test_xtrain_lightgbm_decision_tree_classification(self):
         # arrange
@@ -70,9 +74,8 @@ class TestTrain(unittest.TestCase):
         # assert
         self.assertEqual(Status.success, result.status)
         self.assertIsNotNone(result.model_bytes)
-        dct_scores = {s.id.name: s.value for s in result.scores}
-        self.assertEqual(df.shape[0], dct_scores[ScoreType.total_row_count])
-        self.assertTrue(dct_scores[ScoreType.recall_weighted] > 0.8)
+        self.assertEqual(df.shape[0], result.scores[ScoreType.total_row_count])
+        self.assertTrue(result.scores[ScoreType.recall_weighted] > 0.8)
         self.assertEqual(
             len(config.features) - 1, len(result.explanation_result.feature_importances)
         )
@@ -103,9 +106,8 @@ class TestTrain(unittest.TestCase):
         # assert
         self.assertEqual(Status.success, result.status)
         self.assertIsNotNone(result.model_bytes)
-        dct_scores = {s.id.name: s.value for s in result.scores}
-        self.assertEqual(df.shape[0], dct_scores[ScoreType.total_row_count])
-        self.assertTrue(dct_scores[ScoreType.mean_absolute_error] < 50)
+        self.assertEqual(df.shape[0], result.scores[ScoreType.total_row_count])
+        self.assertTrue(result.scores[ScoreType.mean_absolute_error] < 60)
 
     def test_xtrain_lightgbm_decision_tree_regression(self):
         # arrange
@@ -125,9 +127,8 @@ class TestTrain(unittest.TestCase):
         # assert
         self.assertEqual(Status.success, result.status)
         self.assertIsNotNone(result.model_bytes)
-        dct_scores = {s.id.name: s.value for s in result.scores}
-        self.assertEqual(df.shape[0], dct_scores[ScoreType.total_row_count])
-        self.assertTrue(dct_scores[ScoreType.mean_absolute_error] < 50)
+        self.assertEqual(df.shape[0], result.scores[ScoreType.total_row_count])
+        self.assertTrue(result.scores[ScoreType.mean_absolute_error] < 60)
         self.assertEqual(
             len(config.features) - 1, len(result.explanation_result.feature_importances)
         )
@@ -158,6 +159,5 @@ class TestTrain(unittest.TestCase):
         # assert
         self.assertEqual(Status.success, result.status)
         self.assertIsNotNone(result.model_bytes)
-        dct_scores = {s.id.name: s.value for s in result.scores}
-        self.assertEqual(df.shape[0], dct_scores[ScoreType.total_row_count])
-        self.assertTrue(dct_scores[ScoreType.recall_weighted] > 0.8)
+        self.assertEqual(df.shape[0], result.scores[ScoreType.total_row_count])
+        self.assertTrue(result.scores[ScoreType.recall_weighted] > 0.8)

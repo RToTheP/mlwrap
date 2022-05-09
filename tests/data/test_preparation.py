@@ -119,8 +119,11 @@ class TestPreparation(unittest.TestCase):
         data_details = prepare_inference_data(config)
 
         # assert
-        self.assertEqual(df.shape[1], data_details.inference_input.shape[1], "Model feature should be removed")
-
+        self.assertEqual(
+            df.shape[1],
+            data_details.inference_input.shape[1],
+            "Model feature should be removed",
+        )
 
     def test_split_data(self):
         # arrange

@@ -91,8 +91,14 @@ class AlgorithmBase(metaclass=abc.ABCMeta):
             # decode the inference results
             model_feature = self._config.model_feature
             encoder = data_details.encoders[model_feature.id]
-            prediction_inverse_transform = np.reshape(prediction, (1, -1)) if prediction.ndim == 1 else prediction
-            result = encoder.inverse_transform(prediction_inverse_transform).flatten().tolist()
+            prediction_inverse_transform = (
+                np.reshape(prediction, (1, -1)) if prediction.ndim == 1 else prediction
+            )
+            result = (
+                encoder.inverse_transform(prediction_inverse_transform)
+                .flatten()
+                .tolist()
+            )
 
             probabilities = None
             labels = None
@@ -143,7 +149,6 @@ class AlgorithmBase(metaclass=abc.ABCMeta):
             status=Status.success,
             cleaning_report=data_details.cleaning_report,
             scores=scores,
-            features=self._config.features,
             model_bytes=model_bytes,
             encoder_bytes=encoder_bytes,
             explanation_result=explanation_result,

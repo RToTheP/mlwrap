@@ -155,24 +155,6 @@ class MLConfig:
         return self._problem_type
 
 
-class ModelScore:
-    def __init__(self, id: ScoreType, value, values=None):
-        self.id: ScoreType = id
-        self.value = value
-        if values is not None:
-            self.av = np.average(values).item()
-            self.min = np.min(values).item()
-            self.max = np.max(values).item()
-            self.std = np.std(values).item()
-            self.std_av = self.std / (1 if self.av == 0 else self.av)
-        else:
-            self.av = None
-            self.min = None
-            self.max = None
-            self.std = None
-            self.std_av = None
-
-
 class CleaningRecord:
     def __init__(
         self,
@@ -265,18 +247,16 @@ class TrainingResults:
     def __init__(
         self,
         status: Status,
-        scores: List[Type[ModelScore]] = list(),
+        scores: Dict[Type[ScoreType], float],
         cleaning_report: CleaningReport = None,
-        features: List[Type[Feature]] = None,
         model_bytes: bytes = None,
         encoder_bytes: bytes = None,
         explanation_result: ExplanationResult = None,
         background_data_bytes: bytes = None,
     ) -> None:
         self.status = status
-        self.scores = scores if scores is not None else list()
+        self.scores = scores if scores is not None else {}
         self.cleaning_report = cleaning_report
-        self.features = features if features is not None else list()
         self.model_bytes = model_bytes
         self.encoder_bytes = encoder_bytes
         self.explanation_result = explanation_result

@@ -8,7 +8,6 @@ from mlwrap.config import (
     Feature,
     FeatureImportance,
     MLConfig,
-    ModelScore,
 )
 from mlwrap.enums import FeatureType, ScoreType
 from mlwrap.scores import get_scores, print_explanation_result, print_scores
@@ -19,30 +18,14 @@ class TestScores(unittest.TestCase):
     def setUpClass(cls):
         logging.getLogger().setLevel(logging.DEBUG)
 
-    def test_print_scores_single_value(self):
+    def test_print_scores(self):
         # arrange
-        scores = [
-            ModelScore(id=ScoreType.recall_macro, value=0.5),
-            ModelScore(id=ScoreType.recall_weighted, value=0.75),
-        ]
+        scores = {ScoreType.recall_macro: 0.5, ScoreType.recall_weighted: 0.75}
         # act
         df = print_scores(scores)
         # assert
         self.assertEqual(2, df.shape[0])
         self.assertEqual(1, df.shape[1])
-
-    def test_print_scores_multiple_values(self):
-        # arrange
-        scores = [
-            ModelScore(id=ScoreType.recall_macro, value=0.5, values=[0.25, 0.5, 0.75]),
-            ModelScore(id=ScoreType.recall_weighted, value=0.9, values=[0.8, 0.9, 1.0]),
-        ]
-        # act
-        df = print_scores(scores)
-
-        # assert
-        self.assertEqual(2, df.shape[0])
-        self.assertEqual(6, df.shape[1])
 
     def test_print_explanation_result(self):
         # arrange
@@ -77,11 +60,7 @@ class TestScores(unittest.TestCase):
             encoders=None,
         )
 
-        recall_weighted = [
-            s.value for s in scores if s.id == ScoreType.recall_weighted
-        ][0]
-
-        self.assertAlmostEqual(2 / 3, recall_weighted)
+        self.assertAlmostEqual(2 / 3, scores[ScoreType.recall_weighted])
 
     def test_get_scores_regression(self):
         config = MLConfig(
@@ -108,5 +87,4 @@ class TestScores(unittest.TestCase):
             actuals=actuals,
             encoders=encoders,
         )
-        dct_scores = {s.id.name: s.value for s in scores}
-        self.assertAlmostEqual(dct_scores[ScoreType.mean_absolute_error], 0.2)
+        self.assertAlmostEqual(scores[ScoreType.mean_absolute_error], 0.2)
