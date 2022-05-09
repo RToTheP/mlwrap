@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 import numpy as np
 
 import pandas as pd
@@ -7,11 +7,12 @@ from sklearn.model_selection import train_test_split
 from sklearn.utils import class_weight
 
 from mlwrap.config import CleaningReport, MLConfig
-from mlwrap.data.cleaning import clean_training_data
+from mlwrap.data.cleaning import clean_inference_data, clean_training_data
 from mlwrap.data.config import DataDetails
 from mlwrap.data.encoders import get_fitted_encoders, transform
 from mlwrap.data.sampling import get_background_data, resample_data
-from mlwrap.enums import DataType, ProblemType, Status
+from mlwrap.io import load_pkl
+from mlwrap.enums import CleaningType, DataType, ProblemType, Status
 
 
 def split_data(
@@ -106,6 +107,64 @@ def prepare_training_data(config: MLConfig) -> DataDetails:
         class_weights=class_weights,
         class_ratios=class_ratios,
         total_row_count=total_row_count,
+        encoded_feature_indices=encoded_feature_indices,
+        background_data=background_data,
+    )
+
+
+def prepare_inference_data(config: MLConfig) -> DataDetails:
+    data: pd.DataFrame = get_data(config)
+
+    if data is None:
+        return DataDetails(status=Status.invalid_data)
+
+    # remove the model feature if it is in the inference data
+    if config.model_feature_id in data.columns:
+        data.pop(config.model_feature_id)
+
+    tup: Tuple[Status, pd.DataFrame, CleaningReport] = clean_inference_data(
+        data, config
+    )
+    status: Status = tup[0]
+    data: pd.DataFrame = tup[1]
+    cleaning_report: CleaningReport = tup[2]
+    if status != Status.success:
+        return DataDetails(
+            status=Status.invalid_data,
+            cleaning_report=cleaning_report,
+        )
+
+    unknown_values_input_rows: List[str] = [
+        x.row
+        for x in cleaning_report.cleaning_records
+        if x.cleaning_type == CleaningType.row_feature_out_of_range
+    ]
+
+    # load encoders
+    encoders = (
+        load_pkl(config.encoder_bytes) if config.encoder_bytes is not None else None
+    )
+
+    # get a list of remaining inference_id's
+    inference_ids: List[str] = data.index
+
+    # get transformed data
+    inference_input, encoded_feature_indices = transform(data, config, encoders)
+
+    # load the background data
+    background_data = (
+        load_pkl(config.background_data_bytes)
+        if config.background_data_bytes is not None
+        else None
+    )
+
+    return DataDetails(
+        status=status,
+        cleaning_report=cleaning_report,
+        unknown_values_input_rows=unknown_values_input_rows,
+        inference_input=inference_input,
+        inference_ids=inference_ids,
+        encoders=encoders,
         encoded_feature_indices=encoded_feature_indices,
         background_data=background_data,
     )

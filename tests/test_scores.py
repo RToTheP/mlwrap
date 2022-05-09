@@ -66,8 +66,8 @@ class TestScores(unittest.TestCase):
             ],
             model_feature_id="a",
         )
-        predictions = np.array([[0.1,0.9], [0.2,0.8], [0.3,0.7]])
-        actuals = np.array([[0,1], [0,1], [1,0]])
+        predictions = np.array([[0.1, 0.9], [0.2, 0.8], [0.3, 0.7]])
+        actuals = np.array([[0, 1], [0, 1], [1, 0]])
 
         scores = get_scores(
             config=config,
@@ -77,9 +77,11 @@ class TestScores(unittest.TestCase):
             encoders=None,
         )
 
-        recall_weighted = [s.value for s in scores if s.id == ScoreType.recall_weighted][0]
+        recall_weighted = [
+            s.value for s in scores if s.id == ScoreType.recall_weighted
+        ][0]
 
-        self.assertAlmostEqual(2/3, recall_weighted)
+        self.assertAlmostEqual(2 / 3, recall_weighted)
 
     def test_get_scores_regression(self):
         config = MLConfig(
@@ -91,6 +93,7 @@ class TestScores(unittest.TestCase):
         )
         predictions = np.array([0.4, 1.2, 2, 0.2])
         actuals = np.array([0.5, 1.0, 1.5, 0.2])
+
         def inverse_transform(x):
             return x
 

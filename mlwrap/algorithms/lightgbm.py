@@ -12,7 +12,6 @@ from mlwrap.config import MLConfig, TrainingResults
 from mlwrap.data.config import DataDetails
 from mlwrap.data.preparation import get_validation_data, flatten_output_data
 from mlwrap.enums import ProblemType, AlgorithmType
-from mlwrap.explainers import explain_model
 
 
 class LightGBMWrapper(AlgorithmBase):

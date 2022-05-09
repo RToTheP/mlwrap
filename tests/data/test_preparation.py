@@ -4,7 +4,12 @@ import unittest
 import pandas as pd
 from mlwrap.data.cleaning import clean_rows
 
-from mlwrap.data.preparation import get_class_ratios, prepare_training_data, split_data
+from mlwrap.data.preparation import (
+    get_class_ratios,
+    prepare_inference_data,
+    prepare_training_data,
+    split_data,
+)
 from mlwrap.config import InputData, MLConfig
 from mlwrap.enums import DataType, Status
 from tests.datasets import IrisDataset
@@ -61,12 +66,12 @@ class TestPreparation(unittest.TestCase):
         )
         self.assertEqual(self.iris.target_count, data_details.test_output.shape[1])
 
-    def test_prepare_data_df_data_frame_missing(self):
+    def test_prepare_training_data_df_data_frame_missing(self):
         config = MLConfig(input_data=InputData(data_type=DataType.DataFrame))
         data_details = prepare_training_data(config)
         self.assertEqual(Status.invalid_data, data_details.status)
 
-    def test_prepare_data_df(self):
+    def test_prepare_training_data_df(self):
         # arrange
         df = pd.concat([self.iris.df_X, self.iris.df_y], axis=1)
 
@@ -98,6 +103,24 @@ class TestPreparation(unittest.TestCase):
             data_details.test_output.shape[0],
         )
         self.assertEqual(self.iris.target_count, data_details.test_output.shape[1])
+
+    def test_prepare_inference_data_df(self):
+        # arrange
+        df = pd.concat([self.iris.df_X, self.iris.df_y], axis=1)
+
+        config = MLConfig(
+            features=self.iris.features,
+            model_feature_id=self.iris.model_feature_id,
+            input_data=InputData(data_type=DataType.DataFrame, data_frame=df),
+        )
+        # act
+        training_data_details = prepare_training_data(config)
+        config.encoder_bytes = training_data_details.get_encoder_bytes()
+        data_details = prepare_inference_data(config)
+
+        # assert
+        self.assertEqual(df.shape[1], data_details.inference_input.shape[1], "Model feature should be removed")
+
 
     def test_split_data(self):
         # arrange

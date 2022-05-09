@@ -2,8 +2,8 @@ from typing import Dict, List, Type, Union
 
 import numpy as np
 import pandas as pd
-from mlwrap.config import CleaningReport
 
+from mlwrap.config import CleaningReport
 from mlwrap.data.encoders import EncodedFeatureIndex, EncoderBase
 from mlwrap.enums import Status
 from mlwrap.io import save_pkl_bytes
@@ -24,6 +24,9 @@ class DataDetails:
         total_row_count: int = None,
         encoded_feature_indices: List[Type[EncodedFeatureIndex]] = None,
         background_data: Union[pd.DataFrame, np.ndarray] = None,
+        unknown_values_input_rows: List[str] = None,
+        inference_ids: List[str] = None,
+        inference_input: Union[pd.DataFrame, np.ndarray] = None,
     ) -> None:
         self.status = status
         self.cleaning_report = cleaning_report
@@ -37,6 +40,11 @@ class DataDetails:
         self.total_row_count = total_row_count
         self.encoded_feature_indices = encoded_feature_indices
         self.background_data = background_data
+        self.unknown_values_input_rows = (
+            unknown_values_input_rows if unknown_values_input_rows is not None else []
+        )
+        self.inference_ids = inference_ids if inference_ids is not None else []
+        self.inference_input = inference_input
 
     def get_encoder_bytes(self) -> bytes:
         return save_pkl_bytes(self.encoders)

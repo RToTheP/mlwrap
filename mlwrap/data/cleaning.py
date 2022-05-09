@@ -84,8 +84,8 @@ def clean_rows(
             # Try to replace the values with the "OTHER" label.
             # labels that are outside of the model but within the allowed labels (which is anything that
             # was in the training set irrespective of whether it was removed/regrouped)
-            model_labels_ = [x.id for x in feature.model_labels]
-            allowed_labels_ = [x.id for x in feature.allowed_labels]
+            model_labels_ = [x for x in feature.model_labels]
+            allowed_labels_ = [x for x in feature.allowed_labels]
             rows_with_knowns = np.bitwise_and(
                 ~data[feature.id].isin(model_labels_),
                 data[feature.id].isin(allowed_labels_),

@@ -17,40 +17,6 @@ from mlwrap.enums import (
 )
 
 
-class EncoderDetail:
-    def __init__(self, id: str = None, model_id: str = None, data: bytes = None):
-        self.id = id
-        self.model_id = model_id
-        self.data = data
-
-
-class ModelDetail:
-    def __init__(
-        self,
-        id: str = None,
-        model_id: str = None,
-        algorithm: AlgorithmType = None,
-        data: bytes = None,
-    ):
-        self.id = id
-        self.model_id = model_id
-        self.algorithm: AlgorithmType = algorithm
-        self.data = data
-
-
-class InferenceInput:
-    def __init__(self, id=None, blob_id=None, row=None):
-        self.id = id
-        self.blob_id = blob_id
-        self.row = row
-
-
-class LabelDetail:
-    def __init__(self, id=None, count=None):
-        self.id = id
-        self.count = count
-
-
 class Feature:
     def __init__(
         self,
@@ -67,8 +33,8 @@ class Feature:
         hash_size_ratio=None,
         model_min_value=None,
         model_max_value=None,
-        model_labels=None,
-        allowed_labels=None,
+        model_labels: List[str] = None,
+        allowed_labels: List[str] = None,
         other_label=None,
         keep_n_labels=None,
         label_percentage_threshold=None,
@@ -132,13 +98,16 @@ class MLConfig:
         explain: bool = False,
         explainer_type: ExplainerType = None,
         explanation_background_samples: int = None,
+        model_bytes: bytes = None,
+        encoder_bytes: bytes = None,
+        background_data_bytes: bytes = None,
     ) -> None:
         self.algorithm_type = (
             algorithm_type
             if algorithm_type is not None
             else AlgorithmType.LightGBMDecisionTree
         )
-        self.features = features if features is not None else list()
+        self.features = features if features is not None else []
         self.model_feature_id = model_feature_id
         self.input_data = input_data
         self.train_test_split = train_test_split
@@ -160,6 +129,10 @@ class MLConfig:
             if explanation_background_samples is not None
             else 100,
         )
+        self.model_bytes = model_bytes
+        self.encoder_bytes = encoder_bytes
+        self.background_data_bytes = background_data_bytes
+
         self._problem_type = None
         self._model_feature = None
 
@@ -218,7 +191,7 @@ class CleaningRecord:
 
 class CleaningReport:
     def __init__(self):
-        self.cleaning_records: List[CleaningRecord] = list()
+        self.cleaning_records: List[CleaningRecord] = []
 
     def merge(self, other):
         self.cleaning_records = [*self.cleaning_records, *other.cleaning_records]
@@ -284,15 +257,8 @@ class InferenceOutput:
         self.status = status
         self.cleaning_report = cleaning_report
         self.inference_results = (
-            inference_results if inference_results is not None else list()
+            inference_results if inference_results is not None else []
         )
-
-
-class BackgroundDataDetail:
-    def __init__(self, id: str = None, data: bytes = None, path: str = None):
-        self.id = id
-        self.data = data
-        self.path = path
 
 
 class TrainingResults:
@@ -301,25 +267,17 @@ class TrainingResults:
         status: Status,
         scores: List[Type[ModelScore]] = list(),
         cleaning_report: CleaningReport = None,
-        encoder_details: List[Type[EncoderDetail]] = None,
-        model_details: ModelDetail = None,
         features: List[Type[Feature]] = None,
         model_bytes: bytes = None,
-        encoder_bytes: Dict[str, bytes] = None,
+        encoder_bytes: bytes = None,
         explanation_result: ExplanationResult = None,
-        background_data_detail: BackgroundDataDetail = None,
-        background_data_bytes: Dict[str, bytes] = None,
+        background_data_bytes: bytes = None,
     ) -> None:
         self.status = status
         self.scores = scores if scores is not None else list()
         self.cleaning_report = cleaning_report
-        self.encoder_details = (
-            encoder_details if encoder_details is not None else list()
-        )
-        self.model_details = model_details if model_details is not None else list()
         self.features = features if features is not None else list()
         self.model_bytes = model_bytes
         self.encoder_bytes = encoder_bytes
         self.explanation_result = explanation_result
-        self.background_data_detail = background_data_detail
         self.background_data_bytes = background_data_bytes

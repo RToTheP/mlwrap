@@ -12,7 +12,7 @@ from h5py import File
 
 
 from mlwrap.algorithms.base import AlgorithmBase
-from mlwrap.config import MLConfig, ModelDetail, TrainingResults
+from mlwrap.config import MLConfig, TrainingResults
 from mlwrap.data.config import DataDetails
 from mlwrap.data.preparation import get_validation_data, flatten_output_data
 from mlwrap.enums import ProblemType, AlgorithmType
@@ -159,10 +159,10 @@ class KerasNeuralNetwork(AlgorithmBase):
 
         return binary_image
 
-    def load_model(self, model_detail: ModelDetail):
+    def load_model(self, model_bytes: bytes = None):
         path_or_bytes = None
-        if isinstance(model_detail.data, bytes):
-            path_or_bytes = File(BytesIO(model_detail.data), "r")
+        if isinstance(model_bytes, bytes):
+            path_or_bytes = File(BytesIO(model_bytes), "r")
 
         model = keras.models.load_model(path_or_bytes, compile=False)
         model.summary()

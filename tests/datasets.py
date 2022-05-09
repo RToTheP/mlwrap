@@ -19,6 +19,7 @@ class IrisDataset:
         Feature(id=model_feature_id, feature_type=FeatureType.Categorical),
     ]
 
+
 class DiabetesDataset:
     dataset = load_diabetes(as_frame=True)
     df_X = dataset["data"]

@@ -10,13 +10,10 @@ import numpy as np
 import pandas as pd
 
 from mlwrap.config import (
-    BackgroundDataDetail,
-    EncoderDetail,
     ExplanationResult,
     InferenceOutput,
     InferenceResult,
     MLConfig,
-    ModelDetail,
     TrainingResults,
 )
 from mlwrap.data.config import DataDetails
@@ -82,16 +79,7 @@ class AlgorithmBase(metaclass=abc.ABCMeta):
             explanation_results = explainer.explain(data_details=data_details)
 
         # get the inference results
-        inference_results: List[Type[InferenceResult]] = list()
-
-        # process any invalid rows
-        for inference_id in data_details.invalid_input_rows:
-            inference_results.append(
-                InferenceResult(
-                    inference_id=inference_id,
-                    status=Status.failed_invalid_row,
-                )
-            )
+        inference_results: List[Type[InferenceResult]] = []
 
         # then loop over the predictions
         for inference_id, prediction, explanation_result in zip(
@@ -103,9 +91,8 @@ class AlgorithmBase(metaclass=abc.ABCMeta):
             # decode the inference results
             model_feature = self._config.model_feature
             encoder = data_details.encoders[model_feature.id]
-            if prediction.ndim == 1:
-                prediction = np.reshape(prediction, (1, -1))
-            result = encoder.inverse_transform(prediction).flatten().tolist()
+            prediction_inverse_transform = np.reshape(prediction, (1, -1)) if prediction.ndim == 1 else prediction
+            result = encoder.inverse_transform(prediction_inverse_transform).flatten().tolist()
 
             probabilities = None
             labels = None
@@ -146,39 +133,31 @@ class AlgorithmBase(metaclass=abc.ABCMeta):
             explanation_result = None
 
         # save the models and encoders
-        encoder_bytes = {self.id: data_details.get_encoder_bytes()}
+        encoder_bytes = data_details.get_encoder_bytes()
         model_bytes = self.get_model_bytes()
-        background_data_bytes = {self.id: data_details.get_background_data_bytes()}
+        background_data_bytes = data_details.get_background_data_bytes()
 
         # construct the results
-        encoder_details: List[Type[EncoderDetail]] = [EncoderDetail(id=self.id)]
-        model_details: List[Type[ModelDetail]] = [
-            ModelDetail(id=self.id, algorithm=self.algorithm)
-        ]
-        background_data_detail: BackgroundDataDetail = BackgroundDataDetail(id=self.id)
 
         return TrainingResults(
             status=Status.success,
             cleaning_report=data_details.cleaning_report,
             scores=scores,
-            encoder_details=encoder_details,
-            model_details=model_details,
             features=self._config.features,
             model_bytes=model_bytes,
             encoder_bytes=encoder_bytes,
             explanation_result=explanation_result,
-            background_data_detail=background_data_detail,
             background_data_bytes=background_data_bytes,
         )
 
     def get_model_bytes(self) -> bytes:
         return save_pkl_bytes(self._model)
 
-    def load_model(self, model_detail: ModelDetail):
-        return load_pkl(model_detail.data)
+    def load_model(self, model_bytes: bytes):
+        return load_pkl(model_bytes)
 
     def load(self) -> bool:
-        self._model = self.load_model(self._config.model_details[0])
+        self._model = self.load_model(self._config.model_bytes)
         if self._model is None:
             return False
         return True

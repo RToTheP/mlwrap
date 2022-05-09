@@ -5,7 +5,7 @@ import unittest
 import logging
 
 
-from mlwrap.config import MLConfig, Feature, LabelDetail
+from mlwrap.config import MLConfig, Feature
 from mlwrap.data.cleaning import clean_features, clean_rows, regroup_labels
 
 from mlwrap.enums import Status, FeatureType, HandleUnknown, CleaningType
@@ -512,8 +512,8 @@ class TestCleaning(unittest.TestCase):
             Feature(
                 id="Colour",
                 feature_type=FeatureType.Categorical,
-                model_labels=[LabelDetail(x) for x in ["Red", "Blue"]],
-                allowed_labels=[LabelDetail(x) for x in ["Red", "Blue"]],
+                model_labels=[x for x in ["Red", "Blue"]],
+                allowed_labels=[x for x in ["Red", "Blue"]],
                 handle_unknown=HandleUnknown.remove,
             ),
             Feature(id="Temperature", feature_type=FeatureType.Categorical),
@@ -571,8 +571,8 @@ class TestCleaning(unittest.TestCase):
             Feature(
                 id="Colour",
                 feature_type=FeatureType.Categorical,
-                model_labels=[LabelDetail(x) for x in ["Red", "Blue"]],
-                allowed_labels=[LabelDetail(x) for x in ["Red", "Blue"]],
+                model_labels=[x for x in ["Red", "Blue"]],
+                allowed_labels=[x for x in ["Red", "Blue"]],
                 handle_unknown=HandleUnknown.remove,
             ),
             Feature(id="Temperature", feature_type=FeatureType.Categorical),
@@ -632,8 +632,8 @@ class TestCleaning(unittest.TestCase):
             Feature(
                 id="Colour",
                 feature_type=FeatureType.Categorical,
-                model_labels=[LabelDetail(x) for x in ["Red", "Blue"]],
-                allowed_labels=[LabelDetail(x) for x in ["Red", "Blue"]],
+                model_labels=[x for x in ["Red", "Blue"]],
+                allowed_labels=[x for x in ["Red", "Blue"]],
                 handle_unknown=HandleUnknown.allow,
                 other_label="OTHER",
             ),
@@ -671,10 +671,8 @@ class TestCleaning(unittest.TestCase):
             Feature(
                 id="Colour",
                 feature_type=FeatureType.Categorical,
-                model_labels=[LabelDetail(x) for x in ["Red", "Blue"]],
-                allowed_labels=[
-                    LabelDetail(x) for x in ["Red", "Blue", "Yellow", "Green", "OTHER"]
-                ],
+                model_labels=[x for x in ["Red", "Blue"]],
+                allowed_labels=[x for x in ["Red", "Blue", "Yellow", "Green", "OTHER"]],
                 handle_unknown=HandleUnknown.allow,
                 other_label="OTHER",
             ),
@@ -735,8 +733,8 @@ class TestCleaning(unittest.TestCase):
             Feature(
                 id="Colour",
                 feature_type=FeatureType.Categorical,
-                model_labels=[LabelDetail(x) for x in ["Red", "Blue"]],
-                allowed_labels=[LabelDetail(x) for x in ["Red", "Blue"]],
+                model_labels=[x for x in ["Red", "Blue"]],
+                allowed_labels=[x for x in ["Red", "Blue"]],
                 handle_unknown=HandleUnknown.allow,
                 other_label="OTHER",
             ),
