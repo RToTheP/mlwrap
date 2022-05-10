@@ -23,8 +23,19 @@ jobs:
         python-version: "3.10"
     - name: Set up poetry
       uses: Gr1N/setup-poetry@v7
+    - uses: actions/cache@v2
+      with:
+        path: ~/.cache/pypoetry/virtualenvs
+        key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
     - run: poetry --version
-    - name: Install dependencies
+    - name: Install OS dependencies
+      run: |
+        sudo apt-get update && export DEBIAN_FRONTEND=noninteractive
+        sudo apt-get -y install --no-install-recommends \
+          build-essential \
+          libedit-dev  \
+          libhdf5-dev
+    - name: Install python libs
       run: |
         poetry export --without-hashes -f 'requirements.txt' --output 'requirements.txt'
         python -m pip install --upgrade pip
