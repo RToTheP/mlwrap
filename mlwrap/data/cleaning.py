@@ -51,7 +51,7 @@ def clean_rows(
     cleaning_report = CleaningReport()
     initial_row_count = data.shape[0]
     # loop over the rows and clean values
-    for feature in config.features:
+    for feature in config.features.values():
         if feature.id not in data.columns:
             continue
 
@@ -221,7 +221,7 @@ def regroup_labels(
 ) -> Tuple[Status, pd.DataFrame, CleaningReport]:
     status = Status.success if data is not None else Status.failed
     cleaning_report = CleaningReport()
-    for feature in config.features:
+    for feature in config.features.values():
         if feature.feature_type != FeatureType.Categorical:
             continue
         if feature.id not in data.columns:
@@ -317,7 +317,7 @@ def clean_features(data, config: MLConfig):
     cleaning_report = CleaningReport()
     while True and status == Status.success:
         restart_cleaning = False
-        for feature in config.features:
+        for feature in config.features.values():
             drop_feature: bool = False
 
             if feature.id not in data.columns:

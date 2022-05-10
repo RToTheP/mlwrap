@@ -89,7 +89,7 @@ class AlgorithmBase(metaclass=abc.ABCMeta):
             status = Status.success_with_unknown if hit_unknown else Status.success
 
             # decode the inference results
-            model_feature = self._config.model_feature
+            model_feature = self._config.features[self._config.model_feature_id]
             encoder = data_details.encoders[model_feature.id]
             prediction_inverse_transform = (
                 np.reshape(prediction, (1, -1)) if prediction.ndim == 1 else prediction

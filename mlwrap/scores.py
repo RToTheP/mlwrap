@@ -139,7 +139,7 @@ def calculate_scores(
     data_details: DataDetails,
 ) -> Dict[Type[ScoreType], float]:
     # evaluate metrics
-    n_active_features: int = len([x for x in config.features if x.active])
+    n_active_features: int = len([x for x in config.features.values() if x.active])
     scores = {
         ScoreType.iterations: int(iterations),
         ScoreType.total_row_count: data_details.total_row_count,

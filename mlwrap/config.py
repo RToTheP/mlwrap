@@ -81,7 +81,7 @@ class MLConfig:
     def __init__(
         self,
         algorithm_type: AlgorithmType = None,
-        features: List[Type[Feature]] = None,
+        features: Union[List[Type[Feature]], Dict[str, Type[Feature]]] = None,
         model_feature_id: str = None,
         input_data: InputData = None,
         train_test_split: float = 0.8,
@@ -107,7 +107,9 @@ class MLConfig:
             if algorithm_type is not None
             else AlgorithmType.LightGBMDecisionTree
         )
-        self.features = features if features is not None else []
+        self.features = features if features is not None else {}
+        if isinstance(self.features, list):
+            self.features = { f.id : f for f in self.features }
         self.model_feature_id = model_feature_id
         self.input_data = input_data
         self.train_test_split = train_test_split
@@ -137,19 +139,11 @@ class MLConfig:
         self._model_feature = None
 
     @property
-    def model_feature(self):
-        if self._model_feature is None:
-            self._model_feature = [
-                f for f in self.features if f.id == self.model_feature_id
-            ][0]
-        return self._model_feature
-
-    @property
     def problem_type(self):
         if self._problem_type is None:
             self._problem_type = (
                 ProblemType.Classification
-                if self.model_feature.feature_type == FeatureType.Categorical
+                if self.features[self.model_feature_id].feature_type == FeatureType.Categorical
                 else ProblemType.Regression
             )
         return self._problem_type

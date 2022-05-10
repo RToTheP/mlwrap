@@ -11,13 +11,13 @@ class IrisDataset:
     target_names = dataset["target_names"]
     target_count = len(dataset["target_names"])
     model_feature_id = "target"
-    features = [
-        *[
-            Feature(id=name, feature_type=FeatureType.Continuous)
+    features = {
+        **{
+            name : Feature(id=name, feature_type=FeatureType.Continuous)
             for name in dataset["feature_names"]
-        ],
-        Feature(id=model_feature_id, feature_type=FeatureType.Categorical),
-    ]
+        },
+        model_feature_id : Feature(id=model_feature_id, feature_type=FeatureType.Categorical),
+    }
 
 
 class DiabetesDataset:
@@ -25,10 +25,10 @@ class DiabetesDataset:
     df_X = dataset["data"]
     df_y = dataset["target"]
     model_feature_id = "target"
-    features = [
-        *[
-            Feature(id=name, feature_type=FeatureType.Continuous)
+    features = {
+        **{
+            name : Feature(id=name, feature_type=FeatureType.Continuous)
             for name in dataset["feature_names"]
-        ],
-        Feature(id=model_feature_id, feature_type=FeatureType.Continuous),
-    ]
+        },
+        model_feature_id : Feature(id=model_feature_id, feature_type=FeatureType.Continuous),
+    }

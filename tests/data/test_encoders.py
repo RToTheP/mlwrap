@@ -77,7 +77,7 @@ class TestEncoders(unittest.TestCase):
 
         # assert
         self.assertEqual(len(self.iris.features), len(encoders))
-        self.assertTrue(all(f.id in encoders for f in self.iris.features))
+        self.assertTrue(all(f in encoders for f in self.iris.features))
 
     def test_get_fitted_encoders_no_data(self):
         # arrange

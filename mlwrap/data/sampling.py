@@ -17,7 +17,7 @@ def resample_data(data, config: MLConfig, problem_type: ProblemType):
     cat_feature_count = len(
         [
             feature
-            for feature in config.features
+            for feature in config.features.values()
             if feature.feature_type == FeatureType.Categorical and feature.active
         ]
     )
@@ -40,7 +40,7 @@ def resample_with_smotenc(data, config: MLConfig):
 
     cat_col_indexes = [
         data.columns.get_loc(feature.id)
-        for feature in config.features
+        for feature in config.features.values()
         if feature.feature_type == FeatureType.Categorical and feature.active
     ]
 

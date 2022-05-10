@@ -136,18 +136,17 @@ def transform(
     if data is None:
         raise ValueError("data is missing")
 
-    feature_dct = {feature.id: feature for feature in config.features}
     features = []
     columnData = []
     encodersList = []
 
     if isinstance(data, pd.Series):
-        features.append(feature_dct[data.name])
+        features.append(config.features[data.name])
         columnData.append(data.to_numpy(dtype=str).reshape(-1, 1))
         encodersList.append(encoders[data.name])
     elif isinstance(data, pd.DataFrame):
         for column in data.columns:
-            features.append(feature_dct[column])
+            features.append(config.features[column])
             columnData.append(data[column].to_numpy(dtype=str).reshape(-1, 1))
             encodersList.append(encoders[column])
 
@@ -165,10 +164,9 @@ def get_fitted_encoders(data: pd.DataFrame, config: MLConfig) -> Dict[str, Encod
     if data is None:
         raise ValueError("data is missing")
 
-    features = {feature.id: feature for feature in config.features}
     encoders = {}
     for column in data.columns:
-        feature = features[column]
+        feature = config.features[column]
         column_data = data[feature.id].to_numpy(dtype=str).reshape(-1, 1)
         encoder = _get_encoder(feature, column_data)
         encoder.fit(column_data)
