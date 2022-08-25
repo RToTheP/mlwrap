@@ -11,6 +11,7 @@ RUN if [ "${NODE_VERSION}" != "none" ]; then su vscode -c "umask 0002 && . /usr/
 ENV POETRY_HOME="/opt/poetry"
 RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
 ENV PATH "/opt/poetry/bin/:$PATH"
+RUN poetry config virtualenvs.create false
 #RUN poetry export --without-hashes -f "requirements.txt" --output "requirements.txt"
 
 # [Optional] If your pip requirements rarely change, uncomment this section to add them to the image.
