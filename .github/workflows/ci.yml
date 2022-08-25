@@ -42,4 +42,4 @@ jobs:
         poetry install -E tensorflow -E xai -E lightgbm
     - name: Run unit tests
       run: |
-        python -m unittest
+        poetry run python -m unittest
