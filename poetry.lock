@@ -298,7 +298,7 @@ name = "llvmlite"
 version = "0.39.0"
 description = "lightweight wrapper around basic LLVM functionality"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.7"
 
 [[package]]
@@ -336,7 +336,7 @@ name = "numba"
 version = "0.56.0"
 description = "compiling Python code using LLVM"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.7"
 
 [package.dependencies]
@@ -819,12 +819,12 @@ testing = ["func-timeout", "jaraco.itertools", "pytest (>=6)", "pytest-black (>=
 [extras]
 lightgbm = ["lightgbm"]
 tensorflow = ["tensorflow-aarch64", "tensorflow"]
-xai = ["shap"]
+xai = ["shap", "numba"]
 
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.11"
-content-hash = "b279486df438479cf5254264c7f5f3a36072418e3e8a9b87d11ec1eafd4be110"
+content-hash = "6799d87b2cd3f4ad361274442aba99c9f7b93df335a19ac7ce9d18423a7672b0"
 
 [metadata.files]
 absl-py = [
