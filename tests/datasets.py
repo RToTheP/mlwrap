@@ -13,10 +13,12 @@ class IrisDataset:
     model_feature_id = "target"
     features = {
         **{
-            name : Feature(id=name, feature_type=FeatureType.Continuous)
+            name: Feature(id=name, feature_type=FeatureType.Continuous)
             for name in dataset["feature_names"]
         },
-        model_feature_id : Feature(id=model_feature_id, feature_type=FeatureType.Categorical),
+        model_feature_id: Feature(
+            id=model_feature_id, feature_type=FeatureType.Categorical
+        ),
     }
 
 
@@ -27,8 +29,10 @@ class DiabetesDataset:
     model_feature_id = "target"
     features = {
         **{
-            name : Feature(id=name, feature_type=FeatureType.Continuous)
+            name: Feature(id=name, feature_type=FeatureType.Continuous)
             for name in dataset["feature_names"]
         },
-        model_feature_id : Feature(id=model_feature_id, feature_type=FeatureType.Continuous),
+        model_feature_id: Feature(
+            id=model_feature_id, feature_type=FeatureType.Continuous
+        ),
     }

@@ -9,7 +9,8 @@ ARG NODE_VERSION="none"
 RUN if [ "${NODE_VERSION}" != "none" ]; then su vscode -c "umask 0002 && . /usr/local/share/nvm/nvm.sh && nvm install ${NODE_VERSION} 2>&1"; fi
 
 ENV POETRY_HOME="/opt/poetry"
-RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
+# RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
+RUN curl -sSL https://install.python-poetry.org | python3 -
 ENV PATH "/opt/poetry/bin/:$PATH"
 RUN poetry config virtualenvs.create false
 #RUN poetry export --without-hashes -f "requirements.txt" --output "requirements.txt"

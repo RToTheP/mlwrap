@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple, Type, Union
+from typing import Any, Dict, List, Tuple, Type, Union
 import numpy as np
 
 import pandas as pd
@@ -65,25 +65,12 @@ class Feature:
         )
 
 
-class InputData:
-    def __init__(
-        self,
-        data_type: DataType,
-        data_frame: pd.DataFrame = None,
-        data_path: str = None,
-    ) -> None:
-        self.data_type = data_type
-        self.data_frame = data_frame
-        self.data_path = data_path
-
-
 class MLConfig:
     def __init__(
         self,
         algorithm_type: AlgorithmType = None,
         features: Union[List[Type[Feature]], Dict[str, Type[Feature]]] = None,
         model_feature_id: str = None,
-        input_data: InputData = None,
         train_test_split: float = 0.8,
         shuffle_before_splitting: bool = True,
         balance_data_via_resampling: bool = False,
@@ -101,6 +88,7 @@ class MLConfig:
         model_bytes: bytes = None,
         encoder_bytes: bytes = None,
         background_data_bytes: bytes = None,
+        problem_type: ProblemType = None,
     ) -> None:
         self.algorithm_type = (
             algorithm_type
@@ -109,9 +97,8 @@ class MLConfig:
         )
         self.features = features if features is not None else {}
         if isinstance(self.features, list):
-            self.features = { f.id : f for f in self.features }
+            self.features = {f.id: f for f in self.features}
         self.model_feature_id = model_feature_id
-        self.input_data = input_data
         self.train_test_split = train_test_split
         self.shuffle_before_splitting = shuffle_before_splitting
         self.balance_data_via_resampling = balance_data_via_resampling
@@ -135,7 +122,7 @@ class MLConfig:
         self.encoder_bytes = encoder_bytes
         self.background_data_bytes = background_data_bytes
 
-        self._problem_type = None
+        self._problem_type = problem_type
         self._model_feature = None
 
     @property
@@ -143,7 +130,8 @@ class MLConfig:
         if self._problem_type is None:
             self._problem_type = (
                 ProblemType.Classification
-                if self.features[self.model_feature_id].feature_type == FeatureType.Categorical
+                if self.features[self.model_feature_id].feature_type
+                == FeatureType.Categorical
                 else ProblemType.Regression
             )
         return self._problem_type
@@ -180,7 +168,7 @@ class ExplanationResult:
     def __init__(
         self,
         feature_importances: Dict[str, float] = None,
-        feature_interactions: Dict[Tuple[str,str], float] = None,
+        feature_interactions: Dict[Tuple[str, str], float] = None,
     ):
         self.feature_importances = feature_importances
         self.feature_interactions = feature_interactions
@@ -240,3 +228,9 @@ class TrainingResults:
         self.encoder_bytes = encoder_bytes
         self.explanation_result = explanation_result
         self.background_data_bytes = background_data_bytes
+
+
+class PipelineResults:
+    def __init__(self, scores: Dict[Type[ScoreType], float], model: Any) -> None:
+        self.scores = scores if scores is not None else {}
+        self.model = model

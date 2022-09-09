@@ -11,12 +11,14 @@ def get_algorithm(
     alg_name = name if name is not None else config.algorithm_type
     if alg_name == AlgorithmType.KerasNeuralNetwork:
         from mlwrap.algorithms.keras import KerasNeuralNetwork
+
         return KerasNeuralNetwork(config, stop_event)
     elif alg_name in [
         AlgorithmType.LightGBMDecisionTree,
         AlgorithmType.LightGBMRandomForest,
     ]:
         from mlwrap.algorithms.lightgbm import LightGBMWrapper
+
         return LightGBMWrapper(config, stop_event, alg_name)
     elif alg_name == AlgorithmType.SklearnLinearModel:
         return SklearnLinearModel(config, stop_event)

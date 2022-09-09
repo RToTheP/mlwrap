@@ -1,13 +1,20 @@
+import pandas as pd
+
 from mlwrap.algorithms import AlgorithmBase, get_algorithm
-from mlwrap.config import InferenceOutput, MLConfig, TrainingResults
+from mlwrap.config import InferenceOutput, MLConfig, TrainingResults, PipelineResults
 from mlwrap.data.config import DataDetails
-from mlwrap.data.preparation import prepare_inference_data, prepare_training_data
-from mlwrap.enums import Status
-from mlwrap.scores import print_scores, print_explanation_result
+from mlwrap.data.preparation import (
+    prepare_inference_data,
+    prepare_training_data,
+    split_data_x_y,
+)
+from mlwrap.enums import ProblemType, Status
+from mlwrap import pipeline
+from mlwrap.scores import get_pipeline_scores, print_scores, print_explanation_result
 
 
-def train(config: MLConfig) -> TrainingResults:
-    data_details: DataDetails = prepare_training_data(config)
+def train(config: MLConfig, df: pd.DataFrame) -> TrainingResults:
+    data_details: DataDetails = prepare_training_data(config, df)
 
     algorithm: AlgorithmBase = get_algorithm(config=config)
 
@@ -20,8 +27,8 @@ def train(config: MLConfig) -> TrainingResults:
     return training_results
 
 
-def infer(config: MLConfig) -> InferenceOutput:
-    data_details = prepare_inference_data(config)
+def infer(config: MLConfig, df: pd.DataFrame) -> InferenceOutput:
+    data_details = prepare_inference_data(config, df)
     status = data_details.status
 
     if status != Status.success:
@@ -37,3 +44,38 @@ def infer(config: MLConfig) -> InferenceOutput:
     results: InferenceOutput = alg.infer(data_details)
 
     return results
+
+
+def train_pipeline(config: MLConfig, df: pd.DataFrame) -> PipelineResults:
+    # process the data - can we use an sklearn pipeline for this?
+    # split the data
+
+    X_train, X_test, y_train, y_test = split_data_x_y(
+        df,
+        model_feature_id=config.model_feature_id,
+        train_size=config.train_test_split,
+        shuffle=config.shuffle_before_splitting,
+        problem_type=config.problem_type,
+    )
+
+    # pipeline should:
+    # - clean the data
+    # - resample the data
+    # - fit and transform the data using encoders
+    # - fit a model
+
+    p = pipeline.get_pipeline(config, X_train)
+
+    p.fit(X_train, y_train)
+    scores = get_pipeline_scores(
+        ProblemType.Classification,
+        config.model_feature_id,
+        p.predict_proba,
+        X_test,
+        y_test,
+    )
+
+    print_scores(scores)
+
+    # then get scores and append them to the results object
+    return PipelineResults(scores, p)

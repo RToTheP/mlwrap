@@ -29,7 +29,7 @@ class TestScores(unittest.TestCase):
     def test_print_explanation_result(self):
         # arrange
         explanation_result = ExplanationResult(
-            feature_importances = { "Colour" : 0.5, "Temperature" : 0.2 }
+            feature_importances={"Colour": 0.5, "Temperature": 0.2}
         )
         # act
         df = print_explanation_result(explanation_result)

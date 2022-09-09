@@ -14,18 +14,22 @@ from mlwrap.explainers.sklearn import (
     SklearnLinearModelExplainer,
 )
 
+
 def get_explainer(config: MLConfig = None, algorithm: AlgorithmBase = None):
     if config.explainer_type is not None:
         if config.explainer_type == ExplainerType.SklearnLinearModel:
             return SklearnLinearModelExplainer(config=config, algorithm=algorithm)
         elif config.explainer_type == ExplainerType.LightGBM:
             from mlwrap.explainers.lightgbm import LightGBMExplainer
+
             return LightGBMExplainer(config=config, algorithm=algorithm)
         elif config.explainer_type == ExplainerType.TreeSHAP:
             from mlwrap.explainers.shap import TreeSHAP
+
             return TreeSHAP(config=config, algorithm=algorithm)
         elif config.explainer_type == ExplainerType.GradientSHAP:
             from mlwrap.explainers.shap import GradientSHAP
+
             return GradientSHAP(config=config, algorithm=algorithm)
             from mlwrap.explainers.shap import LinearSHAP
         elif config.explainer_type == ExplainerType.LinearSHAP:
@@ -36,15 +40,18 @@ def get_explainer(config: MLConfig = None, algorithm: AlgorithmBase = None):
     if algorithm is not None:
         if algorithm.algorithm == AlgorithmType.KerasNeuralNetwork:
             from mlwrap.explainers.shap import GradientSHAP
+
             return GradientSHAP(config=config, algorithm=algorithm)
         elif algorithm.algorithm in [
             AlgorithmType.LightGBMDecisionTree,
             AlgorithmType.LightGBMRandomForest,
         ]:
             from mlwrap.explainers.shap import TreeSHAP
+
             return TreeSHAP(config=config, algorithm=algorithm)
         elif algorithm.algorithm == AlgorithmType.SklearnLinearModel:
             from mlwrap.explainers.shap import LinearSHAP
+
             return LinearSHAP(config=config, algorithm=algorithm)
         elif algorithm.algorithm == AlgorithmType.SklearnDecisionTree:
             return SklearnDecisionTreeExplainer(config=config, algorithm=algorithm)

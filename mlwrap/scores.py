@@ -18,6 +18,120 @@ from mlwrap.data.encoders import EncoderBase
 from mlwrap.enums import ProblemType, ScoreType
 
 
+def get_pipeline_scores(
+    problem_type: ProblemType,
+    model_feature_id: str,
+    predict_fn: Callable[[np.ndarray], np.ndarray],
+    inputs: np.ndarray,
+    actuals: np.ndarray,
+    encoders: Dict[str, EncoderBase] = None,
+) -> Dict[Type[ScoreType], float]:
+    # note that some metrics are calculated using different averging methods so that we can get aa different view of the data in the resulting single value
+    # 'macro' means calculate metrics for each label, and find their unweighted mean. This does not take label imbalance into account but rather treats each class equally.
+    # 'weighted' means that we weight each class contribution with the number of records. This means that if the data is imbalanced the majority class will dominate the average
+
+    scores = {}
+    if problem_type == ProblemType.Classification:
+        # predict probabilities for test set
+        predicted_probabilities: np.ndarray = predict_fn(inputs)
+        # predict crisp classes for test set
+        predicted_classes = np.argmax(predicted_probabilities, axis=1)
+
+        # check how many classes we have in the actuals and predictions - if either is one then we can't derive recall, precision, f1 and AUC
+        actuals_raw = pd.get_dummies(actuals).to_numpy()
+        n_actual_classes = len(np.unique(actuals))
+        n_pred_classes = len(np.unique(predicted_classes))
+        logging.debug(
+            f"Class counts: Actuals {n_actual_classes}, Predictions {n_pred_classes}"
+        )
+
+        # accuracy: (tp + tn) / (p + n)
+        # # NOTE: weighted recall is equivalent to accuracy: (tp + tn) / (p + n)
+        scores[ScoreType.recall_weighted] = accuracy_score(actuals, predicted_classes)
+
+        if n_actual_classes > 1:
+            # NOTE: macro recall is equivalent to balanced accuracy (the average of recall on classes)
+            scores[ScoreType.recall_macro] = balanced_accuracy_score(
+                actuals, predicted_classes
+            )
+
+            # precision tp / (tp + fp)
+            # recall: tp / (tp + fn)
+            # f1: 2 tp / (2 tp + fp + fn)
+
+            for av in ["macro", "weighted"]:
+                precision, _, f1, _ = precision_recall_fscore_support(
+                    actuals, predicted_classes, average=av
+                )
+                scores[ScoreType["precision_" + av]] = precision
+                scores[ScoreType["f1_" + av]] = f1
+
+            # ROC AUC
+            # return macro and weighted auc values. The snag here is that sklearn averaging ignores binary classes
+            # so we need to do the averaging ourselves. Also, the precision_recall_fscore_support function doesn't return
+            # supports for individual classes
+            supports = precision_recall_fscore_support(actuals, predicted_classes)[3]
+
+            roc_auc_macro = 0
+            roc_auc_weighted = 0
+            pr_auc_macro = 0
+            pr_auc_weighted = 0
+            # the sklearn roc_auc_score function doesn't appear to work properly for binary problems as it returns the same value for macro or weighted averages
+            for n in range(n_actual_classes):
+                actuals_raw_class = actuals_raw[:, n]
+                n_actuals_raw_class = len(np.unique(actuals_raw_class))
+                if n_actuals_raw_class > 1:
+                    roc_auc_class = roc_auc_score(
+                        actuals_raw_class, predicted_probabilities[:, n]
+                    )
+                    pr, re, _ = precision_recall_curve(
+                        actuals_raw[:, n], predicted_probabilities[:, n]
+                    )
+                    pr_auc_class = auc(re, pr)
+                else:
+                    roc_auc_class = 0
+                    pr_auc_class = 0
+                roc_auc_macro += roc_auc_class
+                roc_auc_weighted += roc_auc_class * supports[n]
+                pr_auc_macro += pr_auc_class
+                pr_auc_weighted += pr_auc_class * supports[n]
+
+            roc_auc_macro = roc_auc_macro / n_actual_classes
+            roc_auc_weighted = roc_auc_weighted / sum(supports)
+            pr_auc_macro = pr_auc_macro / n_actual_classes
+            pr_auc_weighted = pr_auc_weighted / sum(supports)
+            scores[ScoreType.roc_auc_weighted] = roc_auc_weighted
+            scores[ScoreType.roc_auc_macro] = roc_auc_macro
+            scores[ScoreType.pr_auc_weighted] = pr_auc_weighted
+            scores[ScoreType.pr_auc_macro] = pr_auc_macro
+        else:
+            logging.warning(
+                f"There must be more than one class in both actuals and predictions"
+                " to calculate Precisions, Recall, F1 and AUC: Actuals {n_actual_classes},"
+                "Predictions {n_pred_classes}"
+            )
+
+    elif problem_type == ProblemType.Regression:
+        pred_values = predict_fn(inputs)
+
+        # decode the values before calculating metrics
+        encoder = encoders[model_feature_id]
+        pred_values = encoder.inverse_transform(pred_values)
+        actuals = encoder.inverse_transform(actuals)
+
+        scores[ScoreType.mean_absolute_error] = mean_absolute_error(
+            actuals, pred_values
+        )
+        scores[ScoreType.median_absolute_error] = median_absolute_error(
+            actuals, pred_values
+        )
+        scores[ScoreType.mean_squared_error] = mean_squared_error(actuals, pred_values)
+    else:
+        raise NotImplementedError
+
+    return scores
+
+
 def get_scores(
     config: MLConfig,
     predict_fn: Callable[[np.ndarray], np.ndarray],

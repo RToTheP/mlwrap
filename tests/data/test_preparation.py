@@ -10,65 +10,19 @@ from mlwrap.data.preparation import (
     prepare_training_data,
     split_data,
 )
-from mlwrap.config import InputData, MLConfig
+from mlwrap.config import MLConfig
 from mlwrap.enums import DataType, Status
 from tests.datasets import IrisDataset
 
 
 class TestPreparation(unittest.TestCase):
-    tmp_path_iris = "/tmp/iris.csv"
-
     @classmethod
     def setUpClass(cls) -> None:
         cls.iris = IrisDataset()
 
-    def setUp(self):
-        if os.path.exists(self.tmp_path_iris):
-            os.remove(self.tmp_path_iris)
-
-    def test_prepare_training_data_csv_data_path_missing(self):
-
-        config = MLConfig(input_data=InputData(data_type=DataType.Csv))
-        data_details = prepare_training_data(config=config)
-        self.assertEqual(Status.invalid_data, data_details.status)
-
-    def test_prepare_training_data_csv(self):
-        # arrange
-        df = pd.concat([self.iris.df_X, self.iris.df_y], axis=1)
-        df.to_csv(self.tmp_path_iris, index=False)
-
-        config = MLConfig(
-            features=self.iris.features,
-            model_feature_id=self.iris.model_feature_id,
-            input_data=InputData(data_type=DataType.Csv, data_path=self.tmp_path_iris),
-        )
-
-        # act
-        data_details = prepare_training_data(config=config)
-
-        # assert
-        self.assertAlmostEqual(
-            df.shape[0] * config.train_test_split, data_details.train_input.shape[0]
-        )
-        self.assertEqual(df.shape[1] - 1, data_details.train_input.shape[1])
-        self.assertAlmostEqual(
-            df.shape[0] * config.train_test_split, data_details.train_output.shape[0]
-        )
-        self.assertEqual(self.iris.target_count, data_details.train_output.shape[1])
-        self.assertAlmostEqual(
-            df.shape[0] * (1 - config.train_test_split),
-            data_details.test_input.shape[0],
-        )
-        self.assertEqual(df.shape[1] - 1, data_details.test_input.shape[1])
-        self.assertAlmostEqual(
-            df.shape[0] * (1 - config.train_test_split),
-            data_details.test_output.shape[0],
-        )
-        self.assertEqual(self.iris.target_count, data_details.test_output.shape[1])
-
     def test_prepare_training_data_df_data_frame_missing(self):
-        config = MLConfig(input_data=InputData(data_type=DataType.DataFrame))
-        data_details = prepare_training_data(config)
+        config = MLConfig()
+        data_details = prepare_training_data(config, None)
         self.assertEqual(Status.invalid_data, data_details.status)
 
     def test_prepare_training_data_df(self):
@@ -78,11 +32,10 @@ class TestPreparation(unittest.TestCase):
         config = MLConfig(
             features=self.iris.features,
             model_feature_id=self.iris.model_feature_id,
-            input_data=InputData(data_type=DataType.DataFrame, data_frame=df),
         )
 
         # act
-        data_details = prepare_training_data(config)
+        data_details = prepare_training_data(config, df)
 
         # assert
         self.assertAlmostEqual(
@@ -111,12 +64,11 @@ class TestPreparation(unittest.TestCase):
         config = MLConfig(
             features=self.iris.features,
             model_feature_id=self.iris.model_feature_id,
-            input_data=InputData(data_type=DataType.DataFrame, data_frame=df),
         )
         # act
-        training_data_details = prepare_training_data(config)
+        training_data_details = prepare_training_data(config, df)
         config.encoder_bytes = training_data_details.get_encoder_bytes()
-        data_details = prepare_inference_data(config)
+        data_details = prepare_inference_data(config, df)
 
         # assert
         self.assertEqual(

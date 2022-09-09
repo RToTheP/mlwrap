@@ -2,9 +2,9 @@ import logging
 import unittest
 import pandas as pd
 
-from mlwrap.config import InputData, MLConfig
-from mlwrap.enums import AlgorithmType, DataType, ScoreType, Status
-from mlwrap.runners import infer, train
+from mlwrap.config import MLConfig
+from mlwrap.enums import AlgorithmType, DataType, ProblemType, ScoreType, Status
+from mlwrap.runners import infer, train, train_pipeline
 from tests.datasets import DiabetesDataset, IrisDataset
 
 
@@ -23,12 +23,11 @@ class TestTrain(unittest.TestCase):
             algorithm_type=AlgorithmType.LightGBMDecisionTree,
             features=self.iris.features,
             model_feature_id=self.iris.model_feature_id,
-            input_data=InputData(data_type=DataType.DataFrame, data_frame=df),
         )
 
         # training
         # act
-        training_results = train(config=config)
+        training_results = train(config=config, df=df)
 
         # assert
         self.assertEqual(Status.success, training_results.status)
@@ -42,12 +41,11 @@ class TestTrain(unittest.TestCase):
         # act
         n_inferences = 10
         df = pd.concat([self.iris.df_X, self.iris.df_y], axis=1).head(n_inferences)
-        config.input_data = InputData(data_type=DataType.DataFrame, data_frame=df)
         config.model_bytes = training_results.model_bytes
         config.encoder_bytes = training_results.encoder_bytes
         config.background_data_bytes = training_results.background_data_bytes
 
-        inference_output = infer(config=config)
+        inference_output = infer(config=config, df=df)
 
         # assert
         self.assertEqual(n_inferences, len(inference_output.inference_results))
@@ -64,12 +62,11 @@ class TestTrain(unittest.TestCase):
             algorithm_type=AlgorithmType.LightGBMDecisionTree,
             features=self.iris.features,
             model_feature_id=self.iris.model_feature_id,
-            input_data=InputData(data_type=DataType.DataFrame, data_frame=df),
             explain=True,
         )
 
         # act
-        result = train(config=config)
+        result = train(config=config, df=df)
 
         # assert
         self.assertEqual(Status.success, result.status)
@@ -80,9 +77,14 @@ class TestTrain(unittest.TestCase):
             len(config.features) - 1, len(result.explanation_result.feature_importances)
         )
         self.assertTrue(
-            any(value > 0 for value in result.explanation_result.feature_importances.values())
+            any(
+                value > 0
+                for value in result.explanation_result.feature_importances.values()
+            )
         )
-        self.assertEqual(1, result.explanation_result.feature_importances["petal length (cm)"])
+        self.assertEqual(
+            1, result.explanation_result.feature_importances["petal length (cm)"]
+        )
 
     def test_train_lightgbm_decision_tree_regression(self):
         # arrange
@@ -92,11 +94,10 @@ class TestTrain(unittest.TestCase):
             algorithm_type=AlgorithmType.LightGBMDecisionTree,
             features=self.diabetes.features,
             model_feature_id=self.diabetes.model_feature_id,
-            input_data=InputData(data_type=DataType.DataFrame, data_frame=df),
         )
 
         # act
-        result = train(config=config)
+        result = train(config=config, df=df)
 
         # assert
         self.assertEqual(Status.success, result.status)
@@ -112,12 +113,11 @@ class TestTrain(unittest.TestCase):
             algorithm_type=AlgorithmType.LightGBMDecisionTree,
             features=self.diabetes.features,
             model_feature_id=self.diabetes.model_feature_id,
-            input_data=InputData(data_type=DataType.DataFrame, data_frame=df),
             explain=True,
         )
 
         # act
-        result = train(config=config)
+        result = train(config=config, df=df)
 
         # assert
         self.assertEqual(Status.success, result.status)
@@ -128,10 +128,16 @@ class TestTrain(unittest.TestCase):
             len(config.features) - 1, len(result.explanation_result.feature_importances)
         )
         self.assertTrue(
-            any(value > 0 for value in result.explanation_result.feature_importances.values())
+            any(
+                value > 0
+                for value in result.explanation_result.feature_importances.values()
+            )
         )
-        max_feature_importance = max(result.explanation_result.feature_importances, key=result.explanation_result.feature_importances.get)
-        self.assertTrue(max_feature_importance in ['s5', 'bmi'])
+        max_feature_importance = max(
+            result.explanation_result.feature_importances,
+            key=result.explanation_result.feature_importances.get,
+        )
+        self.assertTrue(max_feature_importance in ["s5", "bmi"])
 
     def test_train_keras_neural_network_classification(self):
         # arrange
@@ -141,14 +147,41 @@ class TestTrain(unittest.TestCase):
             algorithm_type=AlgorithmType.KerasNeuralNetwork,
             features=self.iris.features,
             model_feature_id=self.iris.model_feature_id,
-            input_data=InputData(data_type=DataType.DataFrame, data_frame=df),
         )
 
         # act
-        result = train(config=config)
+        result = train(config=config, df=df)
 
         # assert
         self.assertEqual(Status.success, result.status)
         self.assertIsNotNone(result.model_bytes)
         self.assertEqual(df.shape[0], result.scores[ScoreType.total_row_count])
         self.assertTrue(result.scores[ScoreType.recall_weighted] > 0.8)
+
+    def test_e2e_train_pipeline_basic(self):
+        # arrange
+        df = pd.concat([self.iris.df_X, self.iris.df_y], axis=1)
+
+        config = MLConfig(
+            model_feature_id=self.iris.model_feature_id,
+            problem_type=ProblemType.Classification,
+            balance_data_via_resampling= True
+        )
+
+        # training
+        # act
+        result = train_pipeline(config=config, df=df)
+
+        # assert
+        self.assertIsNotNone(result)
+        self.assertTrue(result.scores[ScoreType.recall_weighted] > 0.8)
+
+        # inference
+        # act
+        n_inferences = 10
+        df = pd.concat([self.iris.df_X, self.iris.df_y], axis=1).head(n_inferences)
+        df.pop(self.iris.model_feature_id)
+        predictions = result.model.predict(df)
+
+        # assert
+        self.assertEqual(len(df), len(predictions))

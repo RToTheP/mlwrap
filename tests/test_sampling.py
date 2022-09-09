@@ -1,14 +1,52 @@
-import unittest
-
+from imblearn.under_sampling import RandomUnderSampler
+from imblearn.over_sampling import SMOTE, SMOTENC
 import pandas as pd
-from mlwrap.data.sampling import resample_data
+import pytest
 
+from mlwrap import sampling
 from mlwrap.config import Feature, MLConfig
 from mlwrap.enums import FeatureType, ProblemType
+from tests.datasets import IrisDataset
 
+@pytest.fixture
+def iris():
+    return IrisDataset()
 
-class TestSampling(unittest.TestCase):
-    def test_resample_data(self):
+def test_get_resampler_smote(iris):
+    config = MLConfig(
+        model_feature_id=iris.model_feature_id,
+        problem_type=ProblemType.Classification,
+        balance_data_via_resampling= True
+    )
+    resampler = sampling.get_resampler(iris.df_X, config, config.problem_type)
+    X, y = resampler.fit_resample(iris.df_X, iris.df_y)
+
+    assert isinstance(resampler, SMOTE)
+    assert X is not None
+    assert y is not None
+
+def test_get_resampler_smotenc():
+    df_X = pd.DataFrame(data={
+            'foo' : ['A', 'B', 'A','A', 'B', 'A','A', 'B', 'A','A', 'B', 'A', 'A','A', 'B', 'A'], 
+            'bar' : [0,1,2,0,1,2,2,0,1,1,1,0,1,1,1,0], 
+            'car' : ['C', 'D', 'C','D', 'C', 'D','D', 'C', 'D', 'C', 'C', 'C', 'D', 'C', 'C', 'C']
+        })
+    df_X['foo'] = df_X.foo.astype('category')
+    df_X['car'] = df_X.car.astype('category')
+    df_y = df_X.pop('car')
+    config = MLConfig(
+        model_feature_id='car',
+        problem_type=ProblemType.Classification,
+        balance_data_via_resampling= True
+    )
+    resampler = sampling.get_resampler(df_X, config, config.problem_type)
+    X, y = resampler.fit_resample(df_X, df_y)
+
+    assert isinstance(resampler, SMOTENC)
+    assert X is not None
+    assert y is not None
+
+def test_resample_data():
         # arrange
         data = pd.DataFrame(
             {
@@ -86,8 +124,14 @@ class TestSampling(unittest.TestCase):
         print("Initial 'Blue' value counts -", data["Colour"].value_counts()["Blue"])
 
         # act
-        resampled_data = resample_data(data, config, ProblemType.Classification)
+        X = data
+        y = X.pop('Colour')
+        resampler = sampling.get_resampler(data, config, ProblemType.Classification)
+        X_resampled, y_resampled = resampler.fit_resample(X, y)
+
+        y['Colour'] = y_resampled
 
         # assert
-        self.assertEqual(10, resampled_data["Colour"].value_counts()["Red"])
-        self.assertEqual(10, resampled_data["Colour"].value_counts()["Blue"])
+        value_counts = y["Colour"].value_counts()
+        assert value_counts["Red"] == 10
+        assert value_counts["Blue"] == 10

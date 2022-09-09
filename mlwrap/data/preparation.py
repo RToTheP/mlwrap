@@ -12,7 +12,26 @@ from mlwrap.data.config import DataDetails
 from mlwrap.data.encoders import get_fitted_encoders, transform
 from mlwrap.data.sampling import get_background_data, resample_data
 from mlwrap.io import load_pkl
-from mlwrap.enums import CleaningType, DataType, ProblemType, Status
+from mlwrap.enums import CleaningType, ProblemType, Status
+
+
+def split_data_x_y(
+    data: pd.DataFrame,
+    model_feature_id: str,
+    train_size: float,
+    shuffle: bool,
+    problem_type: ProblemType,
+):
+    X_train, X_test = split_data(
+        data=data,
+        model_feature_id=model_feature_id,
+        train_size=train_size,
+        shuffle=shuffle,
+        problem_type=problem_type,
+    )
+    y_train = X_train.pop(model_feature_id)
+    y_test = X_test.pop(model_feature_id)
+    return X_train, X_test, y_train, y_test
 
 
 def split_data(
@@ -37,24 +56,7 @@ def split_data(
     return split_data
 
 
-def get_data(config: MLConfig) -> pd.DataFrame:
-    input_data = config.input_data
-    if input_data is None:
-        logging.error("Input data missing")
-        return None
-
-    if input_data.data_type == DataType.DataFrame:
-        return input_data.data_frame
-    elif input_data.data_type == DataType.Csv:
-        if input_data.data_path is None:
-            logging.error("Csv data path missing")
-            return None
-        return pd.read_csv(input_data.data_path)
-    raise NotImplementedError
-
-
-def prepare_training_data(config: MLConfig) -> DataDetails:
-    df = get_data(config)
+def prepare_training_data(config: MLConfig, df: pd.DataFrame()) -> DataDetails:
     if df is None:
         return DataDetails(status=Status.invalid_data)
 
@@ -112,9 +114,7 @@ def prepare_training_data(config: MLConfig) -> DataDetails:
     )
 
 
-def prepare_inference_data(config: MLConfig) -> DataDetails:
-    data: pd.DataFrame = get_data(config)
-
+def prepare_inference_data(config: MLConfig, data: pd.DataFrame()) -> DataDetails:
     if data is None:
         return DataDetails(status=Status.invalid_data)
 
