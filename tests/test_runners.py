@@ -1,17 +1,56 @@
 import logging
 import unittest
 import pandas as pd
+import pytest
 
 from mlwrap.config import MLConfig
 from mlwrap.enums import AlgorithmType, DataType, ProblemType, ScoreType, Status
 from mlwrap.runners import infer, train, train_pipeline
 from tests.datasets import DiabetesDataset, IrisDataset
 
+logging.getLogger().setLevel(logging.DEBUG)
+
+@pytest.fixture
+def iris():
+    return IrisDataset()
+
+@pytest.fixture
+def diabetes():
+    return DiabetesDataset()
+
+def test_e2e_train_pipeline_iris(iris):
+    # arrange
+    df = pd.concat([iris.df_X, iris.df_y], axis=1)
+
+    config = MLConfig(
+        algorithm_type=AlgorithmType.SklearnDecisionTree,
+        model_feature_id=iris.model_feature_id,
+        problem_type=ProblemType.Classification,
+        balance_data_via_resampling= True
+    )
+
+    # training
+    # act
+    result = train_pipeline(config=config, df=df)
+
+    # assert
+    assert result is not None
+    assert result.scores[ScoreType.recall_weighted] > 0.8
+
+    # inference
+    # act
+    n_inferences = 10
+    df = pd.concat([iris.df_X, iris.df_y], axis=1).head(n_inferences)
+    df.pop(iris.model_feature_id)
+    predictions = result.model.predict(df)
+
+    # assert
+    assert len(df) == len(predictions)
+
 
 class TestTrain(unittest.TestCase):
     @classmethod
-    def setUpClass(cls) -> None:
-        logging.getLogger().setLevel(logging.DEBUG)
+    def setUpClass(cls) -> None:        
         cls.iris = IrisDataset()
         cls.diabetes = DiabetesDataset()
 
@@ -157,31 +196,3 @@ class TestTrain(unittest.TestCase):
         self.assertIsNotNone(result.model_bytes)
         self.assertEqual(df.shape[0], result.scores[ScoreType.total_row_count])
         self.assertTrue(result.scores[ScoreType.recall_weighted] > 0.8)
-
-    def test_e2e_train_pipeline_basic(self):
-        # arrange
-        df = pd.concat([self.iris.df_X, self.iris.df_y], axis=1)
-
-        config = MLConfig(
-            model_feature_id=self.iris.model_feature_id,
-            problem_type=ProblemType.Classification,
-            balance_data_via_resampling= True
-        )
-
-        # training
-        # act
-        result = train_pipeline(config=config, df=df)
-
-        # assert
-        self.assertIsNotNone(result)
-        self.assertTrue(result.scores[ScoreType.recall_weighted] > 0.8)
-
-        # inference
-        # act
-        n_inferences = 10
-        df = pd.concat([self.iris.df_X, self.iris.df_y], axis=1).head(n_inferences)
-        df.pop(self.iris.model_feature_id)
-        predictions = result.model.predict(df)
-
-        # assert
-        self.assertEqual(len(df), len(predictions))

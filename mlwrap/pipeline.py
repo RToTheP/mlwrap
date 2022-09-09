@@ -4,7 +4,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 
-from mlwrap import sampling
+from mlwrap import estimators, sampling
 from mlwrap.config import MLConfig
 from mlwrap.feature_selection import VarianceThresholdWrapper
 
@@ -48,7 +48,8 @@ def get_pipeline(config: MLConfig, df):
     steps.append(("preprocessor", preprocessor))
 
     # model/estimator algorithm
-    steps.append(("classifier", LogisticRegression(max_iter=1000)))
+    estimator = estimators.get_estimator(config=config)
+    steps.append(("estimator", estimator))
 
     pipeline = Pipeline(steps=steps)
     return pipeline
