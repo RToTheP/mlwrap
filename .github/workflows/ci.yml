@@ -35,11 +35,10 @@ jobs:
         sudo apt-get update && export DEBIAN_FRONTEND=noninteractive
         sudo apt-get -y install --no-install-recommends \
           build-essential \
-          libedit-dev  \
-          libhdf5-dev
+          libedit-dev
     - name: Install python libs
       run: |
         poetry install -E tensorflow -E xai -E lightgbm
     - name: Run unit tests
       run: |
-        poetry run python -m unittest
+        poetry run pytest
