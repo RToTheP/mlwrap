@@ -1,8 +1,6 @@
 from imblearn.pipeline import Pipeline
 
-from mlwrap import encoders, sampling
-from mlwrap.algorithms import get_algorithm
-from mlwrap.enums import ProblemType
+from mlwrap import algorithms, encoders, explainers, sampling
 from mlwrap.config import MLConfig
 from mlwrap.feature_selection import VarianceThresholdWrapper
 
@@ -16,17 +14,25 @@ class MLWrapPipeline(Pipeline):
         *,
         memory=None,
         verbose=False,
-        problem_type: ProblemType = None,
-        model_feature_encoder=None
+        config: MLConfig = None,
+        model_feature_encoder=None,
+        explainer=None
     ):
-        self.problem_type = problem_type
+        self.config = config
         self.model_feature_encoder = model_feature_encoder
+        self.explainer = explainer
+        self.explanations_ = None
         super().__init__(steps, memory=memory, verbose=verbose)
 
     def fit(self, X, y=None, **fit_params):
-        # y = encoders.to_numpy(y).reshape(-1, 1)
         yt = self.model_feature_encoder.fit_transform(y, None, **fit_params)
-        return super().fit(X, yt, **fit_params)
+
+        super().fit(X, yt, **fit_params)
+
+        if self.explainer is not None:
+            self.explanations_ = self.explainer.fit(X, yt)
+
+        return self
 
     def predict(self, X, **predict_params):
         yp = super().predict(X, **predict_params)
@@ -53,12 +59,18 @@ def get_pipeline(config: MLConfig, X_train, X_test, y_train, y_test):
     steps.append(("column_transformer", column_transformer))
 
     # model/estimator algorithm
-    estimator = get_algorithm(config, X_train, X_test, y_train, y_test)
-    steps.append(("estimator", estimator))
+    algorithm = algorithms.get_algorithm(config, X_train, X_test, y_train, y_test)
+    steps.append(("algorithm", algorithm))
+
+    # explainer
+    explainer = None
+    if config.explain:
+        explainer = explainers.get_explainer(config, algorithm, column_transformer)
 
     pipeline = MLWrapPipeline(
         steps=steps,
-        problem_type=config.problem_type,
+        config=config,
         model_feature_encoder=model_feature_encoder,
+        explainer=explainer
     )
     return pipeline

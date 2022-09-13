@@ -2,14 +2,12 @@ from typing import Any, Dict, List, Tuple, Type, Union
 
 from mlwrap.enums import (
     AlgorithmType,
-    CleaningType,
     EncoderType,
     ExplainerType,
     FeatureType,
     HandleUnknown,
     ProblemType,
     ScoreType,
-    Status,
 )
 
 
@@ -133,33 +131,6 @@ class MLConfig:
         return self._problem_type
 
 
-class CleaningRecord:
-    def __init__(
-        self,
-        row: Union[str, int] = None,
-        label: str = None,
-        value: float = None,
-        feature: str = None,
-        cleaning_type: CleaningType = None,
-    ):
-        self.row = row
-        self.label = label
-        self.value = value
-        self.feature = feature
-        self.cleaning_type = cleaning_type
-
-
-class CleaningReport:
-    def __init__(self):
-        self.cleaning_records: List[CleaningRecord] = []
-
-    def merge(self, other):
-        self.cleaning_records = [*self.cleaning_records, *other.cleaning_records]
-
-    def merge_cleaning_records(self, cleaning_records):
-        self.cleaning_records = [*self.cleaning_records, *cleaning_records]
-
-
 class ExplanationResult:
     def __init__(
         self,
@@ -170,63 +141,8 @@ class ExplanationResult:
         self.feature_interactions = feature_interactions
 
 
-class InferenceResult:
-    def __init__(
-        self,
-        inference_id: str = None,
-        feature_id: str = None,
-        group_id: str = None,
-        status: Status = None,
-        values: List[str] = None,
-        probabilities: List[float] = None,
-        labels: List[str] = None,
-        explanation_result: ExplanationResult = None,
-    ):
-        self.inference_id = inference_id
-        self.feature_id = feature_id
-        self.group_id = group_id
-        self.status = status
-        self.values = values
-        self.probabilities = probabilities
-        self.labels = labels
-        self.explanation_result = explanation_result
-
-
-class InferenceOutput:
-    def __init__(
-        self,
-        status: Status = None,
-        cleaning_report: CleaningReport = None,
-        inference_results: List[Type[InferenceResult]] = None,
-    ):
-        self.status = status
-        self.cleaning_report = cleaning_report
-        self.inference_results = (
-            inference_results if inference_results is not None else []
-        )
-
-
 class TrainingResults:
-    def __init__(
-        self,
-        status: Status,
-        scores: Dict[Type[ScoreType], float],
-        cleaning_report: CleaningReport = None,
-        model_bytes: bytes = None,
-        encoder_bytes: bytes = None,
-        explanation_result: ExplanationResult = None,
-        background_data_bytes: bytes = None,
-    ) -> None:
-        self.status = status
-        self.scores = scores if scores is not None else {}
-        self.cleaning_report = cleaning_report
-        self.model_bytes = model_bytes
-        self.encoder_bytes = encoder_bytes
-        self.explanation_result = explanation_result
-        self.background_data_bytes = background_data_bytes
-
-
-class PipelineResults:
-    def __init__(self, scores: Dict[Type[ScoreType], float], model: Any) -> None:
+    def __init__(self, scores: Dict[Type[ScoreType], float], model: Any, explanation_result: ExplanationResult=None) -> None:
         self.scores = scores if scores is not None else {}
         self.model = model
+        self.explanation_result = explanation_result

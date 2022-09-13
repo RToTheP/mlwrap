@@ -1,14 +1,9 @@
-from __future__ import annotations
-
 import abc
-from typing import Dict, List, Type, TYPE_CHECKING
+from typing import Dict, List, Type
 
 import numpy as np
+from sklearn.compose import ColumnTransformer
 
-if TYPE_CHECKING:
-    from mlwrap.algorithms.base import AlgorithmBase
-
-from mlwrap.data.config import DataDetails
 from mlwrap.config import ExplanationResult, MLConfig
 
 
@@ -24,27 +19,30 @@ class ExplainerBase(metaclass=abc.ABCMeta):
         )
 
     @abc.abstractmethod
-    def fit(self, data_details: DataDetails) -> ExplanationResult:
+    def fit(self, X, y) -> ExplanationResult:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def explain(self, data_details: DataDetails) -> List[Type[ExplanationResult]]:
+    def explain(self, X) -> List[Type[ExplanationResult]]:
         raise NotImplementedError
 
-    def __init__(self, config: MLConfig, algorithm: AlgorithmBase) -> None:
+    def __init__(self, config: MLConfig, model, column_transformer) -> None:
         self._config = config
-        self._algorithm = algorithm
+        self._model = model
+        self._column_transformer = column_transformer
+        self._explainer = None
 
 
 def get_feature_importances(
-    data_details: DataDetails, importances: np.ndarray, normalize: bool = True
+    column_transformer: ColumnTransformer, importances: np.ndarray, normalize: bool = True
 ) -> Dict[str, float]:
+    encoded_feature_indices = column_transformer.output_indices_
     # sum the coefficients for the features using the encoded feature indices
     importances_ = [
-        np.sum(importances[x.start_index : x.start_index + x.index_count])
-        for x in data_details.encoded_feature_indices
+        np.sum(importances[x])
+        for x in encoded_feature_indices.values()
     ]
-    features = [x.feature_id for x in data_details.encoded_feature_indices]
+    features = [x for x in encoded_feature_indices]
 
     if normalize:
         importances_ = normalize_abs_values(importances_)

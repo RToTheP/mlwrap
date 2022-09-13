@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Dict, List, Type
+from typing import Dict, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -12,17 +12,16 @@ from sklearn.metrics import (
     mean_squared_error,
 )
 
+from mlwrap import algorithms, preparation
 from mlwrap.config import ExplanationResult, MLConfig
-from mlwrap.data.config import DataDetails
-from mlwrap.data.encoders import EncoderBase
 from mlwrap.enums import ProblemType, ScoreType
 
 
-def get_pipeline_scores(
+def get_scores(
     problem_type: ProblemType,
-    model,
-    X: np.ndarray,
-    y: np.ndarray,
+    y: Union[np.ndarray, pd.Series],
+    y_pred: np.ndarray,
+    y_prob: np.ndarray = None
 ) -> Dict[Type[ScoreType], float]:
     # note that some metrics are calculated using different averging methods so that we can get aa different view of the data in the resulting single value
     # 'macro' means calculate metrics for each label, and find their unweighted mean. This does not take label imbalance into account but rather treats each class equally.
@@ -30,27 +29,22 @@ def get_pipeline_scores(
 
     scores = {}
     if problem_type == ProblemType.Classification:
-        # predict probabilities for test set
-        predicted_probabilities: np.ndarray = model.predict_proba(X)
-        # predict crisp classes for test set
-        predicted_classes = model.predict(X)
-
         # check how many classes we have in the actuals and predictions - if either is one then we can't derive recall, precision, f1 and AUC
         actuals_raw = pd.get_dummies(y).to_numpy()
         n_actual_classes = len(np.unique(y))
-        n_pred_classes = len(np.unique(predicted_classes))
+        n_pred_classes = len(np.unique(y_pred))
         logging.debug(
             f"Class counts: Actuals {n_actual_classes}, Predictions {n_pred_classes}"
         )
 
         # accuracy: (tp + tn) / (p + n)
         # # NOTE: weighted recall is equivalent to accuracy: (tp + tn) / (p + n)
-        scores[ScoreType.recall_weighted] = accuracy_score(y, predicted_classes)
+        scores[ScoreType.recall_weighted] = accuracy_score(y, y_pred)
 
         if n_actual_classes > 1:
             # NOTE: macro recall is equivalent to balanced accuracy (the average of recall on classes)
             scores[ScoreType.recall_macro] = balanced_accuracy_score(
-                y, predicted_classes
+                y, y_pred
             )
 
             # precision tp / (tp + fp)
@@ -59,7 +53,7 @@ def get_pipeline_scores(
 
             for av in ["macro", "weighted"]:
                 precision, _, f1, _ = precision_recall_fscore_support(
-                    y, predicted_classes, average=av
+                    y, y_pred, average=av
                 )
                 scores[ScoreType["precision_" + av]] = precision
                 scores[ScoreType["f1_" + av]] = f1
@@ -68,7 +62,7 @@ def get_pipeline_scores(
             # return macro and weighted auc values. The snag here is that sklearn averaging ignores binary classes
             # so we need to do the averaging ourselves. Also, the precision_recall_fscore_support function doesn't return
             # supports for individual classes
-            supports = precision_recall_fscore_support(y, predicted_classes)[3]
+            supports = precision_recall_fscore_support(y, y_pred)[3]
 
             roc_auc_macro = 0
             roc_auc_weighted = 0
@@ -80,10 +74,10 @@ def get_pipeline_scores(
                 n_actuals_raw_class = len(np.unique(actuals_raw_class))
                 if n_actuals_raw_class > 1:
                     roc_auc_class = roc_auc_score(
-                        actuals_raw_class, predicted_probabilities[:, n]
+                        actuals_raw_class, y_prob[:, n]
                     )
                     pr, re, _ = precision_recall_curve(
-                        actuals_raw[:, n], predicted_probabilities[:, n]
+                        actuals_raw[:, n], y_prob[:, n]
                     )
                     pr_auc_class = auc(re, pr)
                 else:
@@ -110,125 +104,9 @@ def get_pipeline_scores(
             )
 
     elif problem_type == ProblemType.Regression:
-        pred_values = model.predict(X)
-
-        scores[ScoreType.mean_absolute_error] = mean_absolute_error(y, pred_values)
-        scores[ScoreType.median_absolute_error] = median_absolute_error(y, pred_values)
-        scores[ScoreType.mean_squared_error] = mean_squared_error(y, pred_values)
-    else:
-        raise NotImplementedError
-
-    return scores
-
-
-def get_scores(
-    config: MLConfig,
-    predict_fn: Callable[[np.ndarray], np.ndarray],
-    inputs: np.ndarray,
-    actuals: np.ndarray,
-    encoders: Dict[str, EncoderBase],
-) -> Dict[Type[ScoreType], float]:
-    # note that some metrics are calculated using different averging methods so that we can get aa different view of the data in the resulting single value
-    # 'macro' means calculate metrics for each label, and find their unweighted mean. This does not take label imbalance into account but rather treats each class equally.
-    # 'weighted' means that we weight each class contribution with the number of records. This means that if the data is imbalanced the majority class will dominate the average
-
-    scores = {}
-    if config.problem_type == ProblemType.Classification:
-        # predict probabilities for test set
-        predicted_probabilities: np.ndarray = predict_fn(inputs)
-        # predict crisp classes for test set
-        predicted_classes = np.argmax(predicted_probabilities, axis=1)
-        actuals_raw = actuals
-        actuals = np.argmax(actuals, axis=1)
-
-        # check how many classes we have in the actuals and predictions - if either is one then we can't derive recall, precision, f1 and AUC
-        n_actual_classes = len(np.unique(actuals))
-        n_pred_classes = len(np.unique(predicted_classes))
-        logging.debug(
-            f"Class counts: Actuals {n_actual_classes}, Predictions {n_pred_classes}"
-        )
-
-        # accuracy: (tp + tn) / (p + n)
-        # # NOTE: weighted recall is equivalent to accuracy: (tp + tn) / (p + n)
-        scores[ScoreType.recall_weighted] = accuracy_score(actuals, predicted_classes)
-
-        if n_actual_classes > 1:
-            # NOTE: macro recall is equivalent to balanced accuracy (the average of recall on classes)
-            scores[ScoreType.recall_macro] = balanced_accuracy_score(
-                actuals, predicted_classes
-            )
-
-            # precision tp / (tp + fp)
-            # recall: tp / (tp + fn)
-            # f1: 2 tp / (2 tp + fp + fn)
-
-            for av in ["macro", "weighted"]:
-                precision, _, f1, _ = precision_recall_fscore_support(
-                    actuals, predicted_classes, average=av
-                )
-                scores[ScoreType["precision_" + av]] = precision
-                scores[ScoreType["f1_" + av]] = f1
-
-            # ROC AUC
-            # return macro and weighted auc values. The snag here is that sklearn averaging ignores binary classes
-            # so we need to do the averaging ourselves. Also, the precision_recall_fscore_support function doesn't return
-            # supports for individual classes
-            supports = precision_recall_fscore_support(actuals, predicted_classes)[3]
-
-            roc_auc_macro = 0
-            roc_auc_weighted = 0
-            pr_auc_macro = 0
-            pr_auc_weighted = 0
-            # the sklearn roc_auc_score function doesn't appear to work properly for binary problems as it returns the same value for macro or weighted averages
-            for n in range(n_actual_classes):
-                actuals_raw_class = actuals_raw[:, n]
-                n_actuals_raw_class = len(np.unique(actuals_raw_class))
-                if n_actuals_raw_class > 1:
-                    roc_auc_class = roc_auc_score(
-                        actuals_raw_class, predicted_probabilities[:, n]
-                    )
-                    pr, re, _ = precision_recall_curve(
-                        actuals_raw[:, n], predicted_probabilities[:, n]
-                    )
-                    pr_auc_class = auc(re, pr)
-                else:
-                    roc_auc_class = 0
-                    pr_auc_class = 0
-                roc_auc_macro = roc_auc_macro + roc_auc_class
-                roc_auc_weighted = roc_auc_weighted + roc_auc_class * supports[n]
-                pr_auc_macro = pr_auc_macro + pr_auc_class
-                pr_auc_weighted = pr_auc_weighted + pr_auc_class * supports[n]
-
-            roc_auc_macro = roc_auc_macro / n_actual_classes
-            roc_auc_weighted = roc_auc_weighted / sum(supports)
-            pr_auc_macro = pr_auc_macro / n_actual_classes
-            pr_auc_weighted = pr_auc_weighted / sum(supports)
-            scores[ScoreType.roc_auc_weighted] = roc_auc_weighted
-            scores[ScoreType.roc_auc_macro] = roc_auc_macro
-            scores[ScoreType.pr_auc_weighted] = pr_auc_weighted
-            scores[ScoreType.pr_auc_macro] = pr_auc_macro
-        else:
-            logging.warning(
-                f"There must be more than one class in both actuals and predictions"
-                " to calculate Precisions, Recall, F1 and AUC: Actuals {n_actual_classes},"
-                "Predictions {n_pred_classes}"
-            )
-
-    elif config.problem_type == ProblemType.Regression:
-        pred_values = predict_fn(inputs)
-
-        # decode the values before calculating metrics
-        encoder = encoders[config.model_feature_id]
-        pred_values = encoder.inverse_transform(pred_values)
-        actuals = encoder.inverse_transform(actuals)
-
-        scores[ScoreType.mean_absolute_error] = mean_absolute_error(
-            actuals, pred_values
-        )
-        scores[ScoreType.median_absolute_error] = median_absolute_error(
-            actuals, pred_values
-        )
-        scores[ScoreType.mean_squared_error] = mean_squared_error(actuals, pred_values)
+        scores[ScoreType.mean_absolute_error] = mean_absolute_error(y, y_pred)
+        scores[ScoreType.median_absolute_error] = median_absolute_error(y, y_pred)
+        scores[ScoreType.mean_squared_error] = mean_squared_error(y, y_pred)
     else:
         raise NotImplementedError
 
@@ -237,49 +115,47 @@ def get_scores(
 
 def calculate_scores(
     config: MLConfig,
-    iterations: int,
-    predict_fn: Callable[[np.ndarray], np.ndarray],
-    data_details: DataDetails,
+    model,
+    total_row_count: int,
+    y,
+    y_pred,
+    y_prob=None
 ) -> Dict[Type[ScoreType], float]:
     # evaluate metrics
+    n_total_features = len(model.named_steps["variance_threshold"].feature_names_in_)
+    n_active_features = len(model.named_steps["variance_threshold"].get_feature_names_out())
+    n_inactive_features = n_total_features - n_active_features
+
+    algorithm = model.named_steps["algorithm"]
+    iterations = algorithms.get_iterations(config, algorithm)
+    # iterations = algorithms.get_iterations(algorithm)
+
     n_active_features: int = len([x for x in config.features.values() if x.active])
     scores = {
         ScoreType.iterations: int(iterations),
-        ScoreType.total_row_count: data_details.total_row_count,
+        ScoreType.total_row_count: total_row_count,
         ScoreType.active_feature_count: n_active_features,
-        ScoreType.inactive_feature_count: len(config.features) - n_active_features,
+        ScoreType.inactive_feature_count: n_inactive_features,
     }
 
     if config.problem_type == ProblemType.Classification:
+        class_ratios = preparation.get_class_ratios(y)
         scores[ScoreType.majority_class_fraction] = float(
-            list(data_details.class_ratios.values())[0]
+            list(class_ratios.values())[0]
         )
         scores[ScoreType.minority_class_fraction] = (
-            float(list(data_details.class_ratios.values())[-1]),
+            float(list(class_ratios.values())[-1]),
         )
 
-    if data_details.test_input is not None:
-        scores = {
-            **scores,
-            **get_scores(
-                config,
-                predict_fn,
-                data_details.test_input,
-                data_details.test_output,
-                data_details.encoders,
-            ),
-        }
-    else:
-        scores = {
-            **scores,
-            **get_scores(
-                config,
-                predict_fn,
-                data_details.train_input,
-                data_details.train_output,
-                data_details.encoders,
-            ),
-        }
+    scores = {
+        **scores,
+        **get_scores(
+            config.problem_type,
+            y,
+            y_pred,
+            y_prob
+        ),
+    }
     return scores
 
 

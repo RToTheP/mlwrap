@@ -168,3 +168,8 @@ def test_resample_data():
     value_counts = y_resampled.value_counts()
     assert value_counts["Red"] == 10
     assert value_counts["Blue"] == 10
+
+def test_random_sample(iris: IrisDataset):
+    X_sample = sampling.random_sample(iris.X, 100)
+    assert X_sample.shape[0] == 100
+    assert X_sample.shape[1] == iris.X.shape[1]
