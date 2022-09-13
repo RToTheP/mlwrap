@@ -1,6 +1,6 @@
 import pandas as pd
 
-from mlwrap.algorithms import AlgorithmBase, get_algorithm
+from mlwrap.algorithms import AlgorithmBase, get_algorithm_old
 from mlwrap.config import InferenceOutput, MLConfig, TrainingResults, PipelineResults
 from mlwrap.data.config import DataDetails
 from mlwrap.data.preparation import (
@@ -16,7 +16,7 @@ from mlwrap.scores import get_pipeline_scores, print_scores, print_explanation_r
 def train(config: MLConfig, df: pd.DataFrame) -> TrainingResults:
     data_details: DataDetails = prepare_training_data(config, df)
 
-    algorithm: AlgorithmBase = get_algorithm(config=config)
+    algorithm: AlgorithmBase = get_algorithm_old(config=config)
 
     training_results: TrainingResults = algorithm.fit(data_details)
 
@@ -37,7 +37,7 @@ def infer(config: MLConfig, df: pd.DataFrame) -> InferenceOutput:
         )
 
     # get the algorithm
-    alg = get_algorithm(config=config)
+    alg = get_algorithm_old(config=config)
     if not alg.load():
         return
 
@@ -64,13 +64,14 @@ def train_pipeline(config: MLConfig, df: pd.DataFrame) -> PipelineResults:
     # - fit and transform the data using encoders
     # - fit a model
 
-    p = pipeline.get_pipeline(config, X_train)
+    model = pipeline.get_pipeline(config, X_train, X_test, y_train, y_test)
 
-    p.fit(X_train, y_train)
+    model.fit(X_train, y_train)
+
+    # scores
     scores = get_pipeline_scores(
-        ProblemType.Classification,
-        config.model_feature_id,
-        p.predict_proba,
+        config.problem_type,
+        model,
         X_test,
         y_test,
     )
@@ -78,4 +79,4 @@ def train_pipeline(config: MLConfig, df: pd.DataFrame) -> PipelineResults:
     print_scores(scores)
 
     # then get scores and append them to the results object
-    return PipelineResults(scores, p)
+    return PipelineResults(scores, model)

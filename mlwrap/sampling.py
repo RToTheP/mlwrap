@@ -17,17 +17,21 @@ def get_resampler(df, config: MLConfig, problem_type: ProblemType):
         numerical_features_exist = any(
             feature
             for feature in config.features.values()
-            if feature.feature_type == FeatureType.Continuous and feature.active and feature.id != config.model_feature_id
+            if feature.feature_type == FeatureType.Continuous
+            and feature.active
+            and feature.id != config.model_feature_id
         )
         categorical_column_indices = [
             df.columns.get_loc(feature.id)
             for feature in config.features.values()
-            if feature.feature_type == FeatureType.Categorical and feature.active and feature.id != config.model_feature_id
+            if feature.feature_type == FeatureType.Categorical
+            and feature.active
+            and feature.id != config.model_feature_id
         ]
         categorical_features_exist = any(categorical_column_indices)
     else:
-        numerical_features_exist = any(df.dtypes.index != 'category')
-        categorical_column_indices = df.dtypes == 'category'
+        numerical_features_exist = any(df.dtypes.index != "category")
+        categorical_column_indices = df.dtypes == "category"
         categorical_features_exist = any(categorical_column_indices)
 
     resampler = None

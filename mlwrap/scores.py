@@ -20,11 +20,9 @@ from mlwrap.enums import ProblemType, ScoreType
 
 def get_pipeline_scores(
     problem_type: ProblemType,
-    model_feature_id: str,
-    predict_fn: Callable[[np.ndarray], np.ndarray],
-    inputs: np.ndarray,
-    actuals: np.ndarray,
-    encoders: Dict[str, EncoderBase] = None,
+    model,
+    X: np.ndarray,
+    y: np.ndarray,
 ) -> Dict[Type[ScoreType], float]:
     # note that some metrics are calculated using different averging methods so that we can get aa different view of the data in the resulting single value
     # 'macro' means calculate metrics for each label, and find their unweighted mean. This does not take label imbalance into account but rather treats each class equally.
@@ -33,13 +31,13 @@ def get_pipeline_scores(
     scores = {}
     if problem_type == ProblemType.Classification:
         # predict probabilities for test set
-        predicted_probabilities: np.ndarray = predict_fn(inputs)
+        predicted_probabilities: np.ndarray = model.predict_proba(X)
         # predict crisp classes for test set
-        predicted_classes = np.argmax(predicted_probabilities, axis=1)
+        predicted_classes = model.predict(X)
 
         # check how many classes we have in the actuals and predictions - if either is one then we can't derive recall, precision, f1 and AUC
-        actuals_raw = pd.get_dummies(actuals).to_numpy()
-        n_actual_classes = len(np.unique(actuals))
+        actuals_raw = pd.get_dummies(y).to_numpy()
+        n_actual_classes = len(np.unique(y))
         n_pred_classes = len(np.unique(predicted_classes))
         logging.debug(
             f"Class counts: Actuals {n_actual_classes}, Predictions {n_pred_classes}"
@@ -47,12 +45,12 @@ def get_pipeline_scores(
 
         # accuracy: (tp + tn) / (p + n)
         # # NOTE: weighted recall is equivalent to accuracy: (tp + tn) / (p + n)
-        scores[ScoreType.recall_weighted] = accuracy_score(actuals, predicted_classes)
+        scores[ScoreType.recall_weighted] = accuracy_score(y, predicted_classes)
 
         if n_actual_classes > 1:
             # NOTE: macro recall is equivalent to balanced accuracy (the average of recall on classes)
             scores[ScoreType.recall_macro] = balanced_accuracy_score(
-                actuals, predicted_classes
+                y, predicted_classes
             )
 
             # precision tp / (tp + fp)
@@ -61,7 +59,7 @@ def get_pipeline_scores(
 
             for av in ["macro", "weighted"]:
                 precision, _, f1, _ = precision_recall_fscore_support(
-                    actuals, predicted_classes, average=av
+                    y, predicted_classes, average=av
                 )
                 scores[ScoreType["precision_" + av]] = precision
                 scores[ScoreType["f1_" + av]] = f1
@@ -70,7 +68,7 @@ def get_pipeline_scores(
             # return macro and weighted auc values. The snag here is that sklearn averaging ignores binary classes
             # so we need to do the averaging ourselves. Also, the precision_recall_fscore_support function doesn't return
             # supports for individual classes
-            supports = precision_recall_fscore_support(actuals, predicted_classes)[3]
+            supports = precision_recall_fscore_support(y, predicted_classes)[3]
 
             roc_auc_macro = 0
             roc_auc_weighted = 0
@@ -112,20 +110,11 @@ def get_pipeline_scores(
             )
 
     elif problem_type == ProblemType.Regression:
-        pred_values = predict_fn(inputs)
+        pred_values = model.predict(X)
 
-        # decode the values before calculating metrics
-        encoder = encoders[model_feature_id]
-        pred_values = encoder.inverse_transform(pred_values)
-        actuals = encoder.inverse_transform(actuals)
-
-        scores[ScoreType.mean_absolute_error] = mean_absolute_error(
-            actuals, pred_values
-        )
-        scores[ScoreType.median_absolute_error] = median_absolute_error(
-            actuals, pred_values
-        )
-        scores[ScoreType.mean_squared_error] = mean_squared_error(actuals, pred_values)
+        scores[ScoreType.mean_absolute_error] = mean_absolute_error(y, pred_values)
+        scores[ScoreType.median_absolute_error] = median_absolute_error(y, pred_values)
+        scores[ScoreType.mean_squared_error] = mean_squared_error(y, pred_values)
     else:
         raise NotImplementedError
 

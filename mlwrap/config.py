@@ -1,12 +1,8 @@
 from typing import Any, Dict, List, Tuple, Type, Union
-import numpy as np
-
-import pandas as pd
 
 from mlwrap.enums import (
     AlgorithmType,
     CleaningType,
-    DataType,
     EncoderType,
     ExplainerType,
     FeatureType,

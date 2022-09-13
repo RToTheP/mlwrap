@@ -1,4 +1,3 @@
-import os
 import unittest
 
 import pandas as pd
@@ -11,7 +10,7 @@ from mlwrap.data.preparation import (
     split_data,
 )
 from mlwrap.config import MLConfig
-from mlwrap.enums import DataType, Status
+from mlwrap.enums import Status
 from tests.datasets import IrisDataset
 
 
@@ -27,7 +26,7 @@ class TestPreparation(unittest.TestCase):
 
     def test_prepare_training_data_df(self):
         # arrange
-        df = pd.concat([self.iris.df_X, self.iris.df_y], axis=1)
+        df = pd.concat([self.iris.X, self.iris.y], axis=1)
 
         config = MLConfig(
             features=self.iris.features,
@@ -59,7 +58,7 @@ class TestPreparation(unittest.TestCase):
 
     def test_prepare_inference_data_df(self):
         # arrange
-        df = pd.concat([self.iris.df_X, self.iris.df_y], axis=1)
+        df = pd.concat([self.iris.X, self.iris.y], axis=1)
 
         config = MLConfig(
             features=self.iris.features,
@@ -79,7 +78,7 @@ class TestPreparation(unittest.TestCase):
 
     def test_split_data(self):
         # arrange
-        df = pd.concat([self.iris.df_X, self.iris.df_y], axis=1)
+        df = pd.concat([self.iris.X, self.iris.y], axis=1)
 
         config = MLConfig(
             features=self.iris.features, model_feature_id=self.iris.model_feature_id
@@ -101,7 +100,7 @@ class TestPreparation(unittest.TestCase):
 
     def test_split_data_no_data(self):
         # arrange
-        df = pd.concat([self.iris.df_X, self.iris.df_y], axis=1)
+        df = pd.concat([self.iris.X, self.iris.y], axis=1)
 
         config = MLConfig(
             features=self.iris.features, model_feature_id=self.iris.model_feature_id
@@ -120,7 +119,7 @@ class TestPreparation(unittest.TestCase):
 
     def test_get_class_ratios_iris(self):
         # arrange
-        df = pd.concat([self.iris.df_X, self.iris.df_y], axis=1)
+        df = pd.concat([self.iris.X, self.iris.y], axis=1)
 
         config = MLConfig(
             features=self.iris.features, model_feature_id=self.iris.model_feature_id

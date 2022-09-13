@@ -28,12 +28,6 @@ class FeatureType(str, Enum):
 
 
 @unique
-class DataType(str, Enum):
-    Csv = "Csv"
-    DataFrame = "DataFrame"
-
-
-@unique
 class EncoderType(str, Enum):
     OneHot = "OneHot"
     MinMax = "MinMax"
