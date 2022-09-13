@@ -6,8 +6,8 @@ from mlwrap.enums import FeatureType
 
 class IrisDataset:
     dataset = load_iris(as_frame=True)
-    df_X = dataset["data"]
-    df_y = dataset["target"]
+    X = dataset["data"]
+    y = dataset["target"]
     target_names = dataset["target_names"]
     target_count = len(dataset["target_names"])
     model_feature_id = "target"
@@ -24,8 +24,8 @@ class IrisDataset:
 
 class DiabetesDataset:
     dataset = load_diabetes(as_frame=True)
-    df_X = dataset["data"]
-    df_y = dataset["target"]
+    X = dataset["data"]
+    y = dataset["target"]
     model_feature_id = "target"
     features = {
         **{

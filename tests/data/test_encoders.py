@@ -66,7 +66,7 @@ class TestEncoders(unittest.TestCase):
 
     def test_get_fitted_encoders(self):
         # arrange
-        df = pd.concat([self.iris.df_X, self.iris.df_y], axis=1)
+        df = pd.concat([self.iris.X, self.iris.y], axis=1)
 
         config = MLConfig(
             features=self.iris.features, model_feature_id=self.iris.model_feature_id
@@ -90,7 +90,7 @@ class TestEncoders(unittest.TestCase):
 
     def test_transform(self):
         # arrange
-        df = pd.concat([self.iris.df_X, self.iris.df_y], axis=1)
+        df = pd.concat([self.iris.X, self.iris.y], axis=1)
 
         config = MLConfig(
             features=self.iris.features, model_feature_id=self.iris.model_feature_id
@@ -108,7 +108,7 @@ class TestEncoders(unittest.TestCase):
 
     def test_transform_no_data(self):
         # arrange
-        df = pd.concat([self.iris.df_X, self.iris.df_y], axis=1)
+        df = pd.concat([self.iris.X, self.iris.y], axis=1)
 
         config = MLConfig(
             features=self.iris.features, model_feature_id=self.iris.model_feature_id
