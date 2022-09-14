@@ -41,3 +41,11 @@ def train(config: MLConfig, df: pd.DataFrame) -> TrainingResults:
 
     # then get scores and append them to the results object
     return TrainingResults(scores_, model, model.explanations_)
+
+def clean(df: pd.DataFrame):
+
+    pipeline_ = pipeline.get_cleaning_pipeline()
+
+    df_clean = pipeline_.fit_transform(df)
+    
+    return df_clean

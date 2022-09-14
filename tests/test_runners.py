@@ -2,10 +2,9 @@ import logging
 import pandas as pd
 import pytest
 
-from mlwrap import io
+from mlwrap import io, runners
 from mlwrap.config import Feature, MLConfig
 from mlwrap.enums import AlgorithmType, FeatureType, ProblemType
-from mlwrap.runners import train
 from tests.datasets import DiabetesDataset, IrisDataset, TitanicDataset
 
 logging.getLogger().setLevel(logging.DEBUG)
@@ -49,7 +48,7 @@ def test_train_lightgbm_decision_tree_titanic(titanic: TitanicDataset):
     )
 
     # act
-    result = train(config=config, df=df)
+    result = runners.train(config=config, df=df)
 
     # assert
     assert result.model is not None
@@ -66,7 +65,7 @@ def test_e2e_lightgbm_decision_tree_regression(diabetes: DiabetesDataset):
     )
 
     # act
-    results = train(config=config, df=df)
+    results = runners.train(config=config, df=df)
 
     # assert
     assert results.model is not None
@@ -103,7 +102,7 @@ def test_e2e_train_sklearn_linear_classification(iris: IrisDataset):
 
     # training
     # act
-    results = train(config=config, df=df)
+    results = runners.train(config=config, df=df)
 
     # assert
     assert results is not None
@@ -136,7 +135,7 @@ def test_e2e_lightgbm_decision_tree_classification(iris: IrisDataset):
 
     # training
     # act
-    results = train(config=config, df=df)
+    results = runners.train(config=config, df=df)
 
     # assert
     assert results.model is not None
@@ -173,7 +172,7 @@ def test_e2e_keras_classification(iris):
     )
 
     # act
-    results = train(config=config, df=df)
+    results = runners.train(config=config, df=df)
 
     # assert
     assert results.model is not None
@@ -207,7 +206,7 @@ def test_e2e_keras_regression(diabetes: DiabetesDataset):
     )
 
     # act
-    results = train(config=config, df=df)
+    results = runners.train(config=config, df=df)
 
     # assert
     assert results.model is not None
@@ -240,7 +239,7 @@ def test_xtrain_lightgbm_decision_tree_classification(iris: IrisDataset):
     )
 
     # act
-    results = train(config=config, df=df)
+    results = runners.train(config=config, df=df)
 
     # assert
     assert results.model is not None
@@ -268,7 +267,7 @@ def test_xtrain_lightgbm_decision_tree_regression(diabetes: DiabetesDataset):
     )
 
     # act
-    results = train(config=config, df=df)
+    results = runners.train(config=config, df=df)
 
     # assert
     assert results.model is not None
@@ -287,3 +286,14 @@ def test_xtrain_lightgbm_decision_tree_regression(diabetes: DiabetesDataset):
         key=results.explanation_result.feature_importances.get,
     )
     assert max_feature_importance in ["s5", "bmi"]
+
+def test_clean(titanic: TitanicDataset):
+    df = pd.concat([titanic.X, titanic.y], axis=1)
+
+    df_clean = runners.clean(df)
+    df_clean.columns = df.columns
+
+    initial_missing_values = df.isna().sum().sum()
+    final_missing_values = df_clean.isna().sum().sum()
+    assert initial_missing_values != final_missing_values
+    assert final_missing_values == 0

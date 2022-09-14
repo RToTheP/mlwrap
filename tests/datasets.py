@@ -1,3 +1,4 @@
+import pandas as pd
 from sklearn.datasets import load_diabetes, load_iris, fetch_openml
 
 from mlwrap.config import Feature

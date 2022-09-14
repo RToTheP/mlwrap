@@ -1,8 +1,11 @@
+from feature_engine.imputation import CategoricalImputer
+from feature_engine.selection import DropConstantFeatures
 from imblearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer, make_column_selector
+from sklearn.impute import SimpleImputer
 
 from mlwrap import algorithms, encoders, explainers, sampling
 from mlwrap.config import MLConfig
-from mlwrap.feature_selection import VarianceThresholdWrapper
 
 
 class MLWrapPipeline(Pipeline):
@@ -44,10 +47,6 @@ def get_pipeline(config: MLConfig, X_train, X_test, y_train, y_test):
     """Function to build a model pipeline based on config"""
     steps = []
 
-    # cleaning
-    # variance_threshold = VarianceThresholdWrapper()
-    # steps.append(("variance_threshold", variance_threshold))
-
     # sampling
     resampler = sampling.get_resampler(X_train, config, config.problem_type)
     if resampler is not None:
@@ -74,3 +73,24 @@ def get_pipeline(config: MLConfig, X_train, X_test, y_train, y_test):
         explainer=explainer,
     )
     return pipeline
+
+def get_cleaning_pipeline():
+    steps = []
+
+    # transformers to clean feature values
+    numeric_transformer = SimpleImputer(strategy="median")
+    categorical_transformer = CategoricalImputer()
+    categorical_columns = ["category", "object"]
+    column_transformer = ColumnTransformer(
+        transformers=[
+            ("num", numeric_transformer, make_column_selector(dtype_exclude=categorical_columns)),
+            ("cat", categorical_transformer, make_column_selector(dtype_include=categorical_columns)),
+        ]
+    )
+    steps.append(("column_transformer", column_transformer))
+
+    # remove redundant features
+    drop_constant_features = DropConstantFeatures()
+    steps.append(("drop_constant_features", drop_constant_features))
+
+    return Pipeline(steps=steps)
