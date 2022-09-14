@@ -128,9 +128,7 @@ def calculate_scores(
 
     algorithm = model.named_steps["algorithm"]
     iterations = algorithms.get_iterations(config, algorithm)
-    # iterations = algorithms.get_iterations(algorithm)
 
-    n_active_features: int = len([x for x in config.features.values() if x.active])
     scores = {
         ScoreType.iterations: int(iterations),
         ScoreType.total_row_count: total_row_count,

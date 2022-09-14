@@ -16,41 +16,23 @@ class Feature:
         self,
         id: str,
         feature_type: FeatureType,
-        active: bool = True,
         encoder_type: EncoderType = None,
         handle_unknown: HandleUnknown = None,
-        default_value=None,
-        min_value: float = None,
-        max_value: float = None,
         cyclical_period: float = None,
         max_features=None,
         hash_size_ratio=None,
-        model_min_value=None,
-        model_max_value=None,
-        model_labels: List[str] = None,
-        allowed_labels: List[str] = None,
-        other_label=None,
         keep_n_labels=None,
         label_percentage_threshold=None,
     ) -> None:
         self.id = id
         self.feature_type = feature_type
-        self.active = active
         self.encoder_type = encoder_type
         self.handle_unknown = (
             handle_unknown if handle_unknown is not None else HandleUnknown.allow
         )
-        self.default_value = default_value
-        self.min_value = min_value
-        self.max_value = max_value
         self.cyclical_period = cyclical_period
         self.max_features = max_features if max_features is not None else 10000
         self.hash_size_ratio = hash_size_ratio
-        self.model_min_value = model_min_value
-        self.model_max_value = model_max_value
-        self.model_labels = model_labels
-        self.allowed_labels = allowed_labels
-        self.other_label = other_label if other_label is not None else "OTHER"
         self.keep_n_labels = max(keep_n_labels, 0) if keep_n_labels is not None else 10
         self.label_percentage_threshold = (
             max(0, min(label_percentage_threshold, 100))
@@ -79,9 +61,6 @@ class MLConfig:
         explain: bool = False,
         explainer_type: ExplainerType = None,
         explanation_background_samples: int = None,
-        model_bytes: bytes = None,
-        encoder_bytes: bytes = None,
-        background_data_bytes: bytes = None,
         problem_type: ProblemType = None,
     ) -> None:
         self.algorithm_type = (
@@ -112,12 +91,7 @@ class MLConfig:
             if explanation_background_samples is not None
             else 100,
         )
-        self.model_bytes = model_bytes
-        self.encoder_bytes = encoder_bytes
-        self.background_data_bytes = background_data_bytes
-
         self._problem_type = problem_type
-        self._model_feature = None
 
     @property
     def problem_type(self):
