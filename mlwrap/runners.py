@@ -4,6 +4,7 @@ from mlwrap import pipeline, preparation, scores
 from mlwrap.config import MLConfig, TrainingResults
 from mlwrap.enums import ProblemType
 
+
 def train(config: MLConfig, df: pd.DataFrame) -> TrainingResults:
     # split the data
 
@@ -15,7 +16,7 @@ def train(config: MLConfig, df: pd.DataFrame) -> TrainingResults:
         problem_type=config.problem_type,
     )
 
-    # pipeline 
+    # pipeline
 
     model = pipeline.get_pipeline(config, X_train, X_test, y_train, y_test)
 
@@ -32,7 +33,7 @@ def train(config: MLConfig, df: pd.DataFrame) -> TrainingResults:
         total_row_count=df.shape[0],
         y=y_test,
         y_pred=y_pred,
-        y_prob=y_prob
+        y_prob=y_prob,
     )
 
     scores.print_scores(scores_)

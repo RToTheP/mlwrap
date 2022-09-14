@@ -14,15 +14,15 @@ from sklearn.metrics import (
 
 from mlwrap import algorithms, preparation
 from mlwrap.config import ExplanationResult, MLConfig
-from mlwrap.enums import ProblemType, ScoreType
+from mlwrap.enums import ProblemType
 
 
 def get_scores(
     problem_type: ProblemType,
     y: Union[np.ndarray, pd.Series],
     y_pred: np.ndarray,
-    y_prob: np.ndarray = None
-) -> Dict[Type[ScoreType], float]:
+    y_prob: np.ndarray = None,
+) -> Dict[Type[str], float]:
     # note that some metrics are calculated using different averging methods so that we can get aa different view of the data in the resulting single value
     # 'macro' means calculate metrics for each label, and find their unweighted mean. This does not take label imbalance into account but rather treats each class equally.
     # 'weighted' means that we weight each class contribution with the number of records. This means that if the data is imbalanced the majority class will dominate the average
@@ -39,13 +39,11 @@ def get_scores(
 
         # accuracy: (tp + tn) / (p + n)
         # # NOTE: weighted recall is equivalent to accuracy: (tp + tn) / (p + n)
-        scores[ScoreType.recall_weighted] = accuracy_score(y, y_pred)
+        scores['recall_weighted'] = accuracy_score(y, y_pred)
 
         if n_actual_classes > 1:
             # NOTE: macro recall is equivalent to balanced accuracy (the average of recall on classes)
-            scores[ScoreType.recall_macro] = balanced_accuracy_score(
-                y, y_pred
-            )
+            scores['recall_macro'] = balanced_accuracy_score(y, y_pred)
 
             # precision tp / (tp + fp)
             # recall: tp / (tp + fn)
@@ -55,8 +53,8 @@ def get_scores(
                 precision, _, f1, _ = precision_recall_fscore_support(
                     y, y_pred, average=av
                 )
-                scores[ScoreType["precision_" + av]] = precision
-                scores[ScoreType["f1_" + av]] = f1
+                scores["precision_" + av] = precision
+                scores["f1_" + av] = f1
 
             # ROC AUC
             # return macro and weighted auc values. The snag here is that sklearn averaging ignores binary classes
@@ -73,12 +71,8 @@ def get_scores(
                 actuals_raw_class = actuals_raw[:, n]
                 n_actuals_raw_class = len(np.unique(actuals_raw_class))
                 if n_actuals_raw_class > 1:
-                    roc_auc_class = roc_auc_score(
-                        actuals_raw_class, y_prob[:, n]
-                    )
-                    pr, re, _ = precision_recall_curve(
-                        actuals_raw[:, n], y_prob[:, n]
-                    )
+                    roc_auc_class = roc_auc_score(actuals_raw_class, y_prob[:, n])
+                    pr, re, _ = precision_recall_curve(actuals_raw[:, n], y_prob[:, n])
                     pr_auc_class = auc(re, pr)
                 else:
                     roc_auc_class = 0
@@ -92,10 +86,10 @@ def get_scores(
             roc_auc_weighted = roc_auc_weighted / sum(supports)
             pr_auc_macro = pr_auc_macro / n_actual_classes
             pr_auc_weighted = pr_auc_weighted / sum(supports)
-            scores[ScoreType.roc_auc_weighted] = roc_auc_weighted
-            scores[ScoreType.roc_auc_macro] = roc_auc_macro
-            scores[ScoreType.pr_auc_weighted] = pr_auc_weighted
-            scores[ScoreType.pr_auc_macro] = pr_auc_macro
+            scores['roc_auc_weighted'] = roc_auc_weighted
+            scores['roc_auc_macro'] = roc_auc_macro
+            scores['pr_auc_weighted'] = pr_auc_weighted
+            scores['pr_auc_macro'] = pr_auc_macro
         else:
             logging.warning(
                 f"There must be more than one class in both actuals and predictions"
@@ -104,9 +98,13 @@ def get_scores(
             )
 
     elif problem_type == ProblemType.Regression:
-        scores[ScoreType.mean_absolute_error] = mean_absolute_error(y, y_pred)
-        scores[ScoreType.median_absolute_error] = median_absolute_error(y, y_pred)
-        scores[ScoreType.mean_squared_error] = mean_squared_error(y, y_pred)
+        y_norm = y_pred / y
+        y_ones = np.ones(y.shape)
+        scores['mean_abs_error'] = mean_absolute_error(y, y_pred)   
+        scores['median_abs_error'] = median_absolute_error(y, y_pred)
+        scores['norm_mean_abs_error'] = mean_absolute_error(y_ones, y_norm)   
+        scores['norm_median_abs_error'] = median_absolute_error(y_ones, y_norm)
+        scores['mean_squared_error'] = mean_squared_error(y, y_pred)
     else:
         raise NotImplementedError
 
@@ -114,13 +112,8 @@ def get_scores(
 
 
 def calculate_scores(
-    config: MLConfig,
-    model,
-    total_row_count: int,
-    y,
-    y_pred,
-    y_prob=None
-) -> Dict[Type[ScoreType], float]:
+    config: MLConfig, model, total_row_count: int, y, y_pred, y_prob=None
+) -> Dict[str, float]:
     # evaluate metrics
     # n_total_features = len(model.named_steps["variance_threshold"].feature_names_in_)
     # n_active_features = len(model.named_steps["variance_threshold"].get_feature_names_out())
@@ -133,41 +126,35 @@ def calculate_scores(
     iterations = algorithms.get_iterations(config, algorithm)
 
     scores = {
-        ScoreType.iterations: int(iterations),
-        ScoreType.total_row_count: total_row_count,
-        ScoreType.active_feature_count: n_active_features,
-        ScoreType.inactive_feature_count: n_inactive_features,
+        'iterations': int(iterations),
+        'total_row_count': total_row_count,
+        'active_feature_count': n_active_features,
+        'inactive_feature_count': n_inactive_features,
     }
 
     if config.problem_type == ProblemType.Classification:
         class_ratios = preparation.get_class_ratios(y)
-        scores[ScoreType.majority_class_fraction] = float(
+        scores['majority_class_fraction'] = float(
             list(class_ratios.values())[0]
         )
-        scores[ScoreType.minority_class_fraction] = (
+        scores['minority_class_fraction'] = (
             float(list(class_ratios.values())[-1]),
         )
 
     scores = {
         **scores,
-        **get_scores(
-            config.problem_type,
-            y,
-            y_pred,
-            y_prob
-        ),
+        **get_scores(config.problem_type, y, y_pred, y_prob),
     }
     return scores
 
 
-def print_scores(scores: Dict[Type[ScoreType], float]) -> pd.DataFrame:
+def print_scores(scores: Dict[str, float]) -> pd.DataFrame:
     if scores is None:
         return None
     logging.info("Scores:")
-    colname = ["value"]
-    rowname = [s.name for s in scores]
-    vals = [[s] for s in scores.values()]
-    df = pd.DataFrame(vals, rowname, colname)
+    metrics = [s for s in scores]
+    values = [[s] for s in scores.values()]
+    df = pd.DataFrame(data = { 'value' : values}, index=metrics)
     logging.info(df)
     return df
 

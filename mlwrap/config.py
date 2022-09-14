@@ -7,7 +7,6 @@ from mlwrap.enums import (
     FeatureType,
     HandleUnknown,
     ProblemType,
-    ScoreType,
 )
 
 
@@ -116,7 +115,12 @@ class ExplanationResult:
 
 
 class TrainingResults:
-    def __init__(self, scores: Dict[Type[ScoreType], float], model: Any, explanation_result: ExplanationResult=None) -> None:
+    def __init__(
+        self,
+        scores: Dict[str, float],
+        model: Any,
+        explanation_result: ExplanationResult = None,
+    ) -> None:
         self.scores = scores if scores is not None else {}
         self.model = model
         self.explanation_result = explanation_result

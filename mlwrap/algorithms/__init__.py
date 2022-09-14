@@ -27,6 +27,7 @@ def get_algorithm(config: MLConfig, X_train, X_test, y_train, y_test):
     else:
         raise NotImplementedError
 
+
 def get_iterations(config: MLConfig, model):
     if config.algorithm_type == AlgorithmType.KerasNeuralNetwork:
         return model.current_epoch

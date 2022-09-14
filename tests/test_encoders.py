@@ -43,7 +43,9 @@ class TestTfidfEncoder(unittest.TestCase):
         # Test Case 2: Ensure max features get's most frequent words
         encoder = encoders.TfidfEncoder(max_features=2)
         encoder.fit(self.data)
-        self.assertCountEqual(encoder.encoder.get_feature_names_out(), ["big", "yellow"])
+        self.assertCountEqual(
+            encoder.encoder.get_feature_names_out(), ["big", "yellow"]
+        )
 
     def test_transform(self):
         # Test Case 1: Verify that upon inference, it respects the vocab size of the training data
@@ -55,11 +57,12 @@ class TestTfidfEncoder(unittest.TestCase):
         # Test Case 2: validate data type
         self.assertIsInstance(encoded_features, pd.DataFrame)
 
+
 def test_get_column_transformer_from_features_iris(iris: IrisDataset):
     config = MLConfig(
         model_feature_id=iris.model_feature_id,
         problem_type=ProblemType.Classification,
-        features=iris.features
+        features=iris.features,
     )
     column_transformer = encoders.get_column_transformer(config, iris.X)
 
@@ -93,14 +96,15 @@ def test_get_column_transformer_from_dataframe_iris(iris: IrisDataset):
     assert Xt is not None
     assert (iris.X != Xt).all(axis=None)
 
+
 def test_get_model_feature_encoder_from_features_classification(iris: IrisDataset):
-    y = iris.y.astype('category')
+    y = iris.y.astype("category")
     y = iris.target_names[y]
 
     config = MLConfig(
         model_feature_id=iris.model_feature_id,
         problem_type=ProblemType.Classification,
-        features=iris.features
+        features=iris.features,
     )
     model_feature_encoder = encoders.get_model_feature_encoder(config, y)
 
@@ -108,12 +112,13 @@ def test_get_model_feature_encoder_from_features_classification(iris: IrisDatase
     assert yt is not None
     assert y != yt
 
+
 def test_get_model_feature_encoder_from_features_regression(diabetes: DiabetesDataset):
 
     config = MLConfig(
         model_feature_id=diabetes.model_feature_id,
         problem_type=ProblemType.Classification,
-        features=diabetes.features
+        features=diabetes.features,
     )
     model_feature_encoder = encoders.get_model_feature_encoder(config, diabetes.y)
 

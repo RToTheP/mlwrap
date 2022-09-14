@@ -84,7 +84,5 @@ class LinearSHAP(SHAPExplainerBase):
 
 class TreeSHAP(SHAPExplainerBase):
     def _get_explainer(self, background_data) -> shap.explainers.Tree:
-        explainer: shap.explainers.Tree = shap.explainers.Tree(
-            model=self._model
-        )
+        explainer: shap.explainers.Tree = shap.explainers.Tree(model=self._model)
         return explainer

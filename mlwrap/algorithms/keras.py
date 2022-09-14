@@ -99,7 +99,6 @@ def get_keras(config: MLConfig, X_train, X_test, y_train, y_test):
             epochs=config.maximum_training_iterations,
             validation_split=0.2,
             callbacks=callbacks,
-            class_weight=class_weights,
             verbose=2,
         )
 

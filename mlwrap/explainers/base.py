@@ -34,14 +34,13 @@ class ExplainerBase(metaclass=abc.ABCMeta):
 
 
 def get_feature_importances(
-    column_transformer: ColumnTransformer, importances: np.ndarray, normalize: bool = True
+    column_transformer: ColumnTransformer,
+    importances: np.ndarray,
+    normalize: bool = True,
 ) -> Dict[str, float]:
     encoded_feature_indices = column_transformer.output_indices_
     # sum the coefficients for the features using the encoded feature indices
-    importances_ = [
-        np.sum(importances[x])
-        for x in encoded_feature_indices.values()
-    ]
+    importances_ = [np.sum(importances[x]) for x in encoded_feature_indices.values()]
     features = [x for x in encoded_feature_indices]
 
     if normalize:

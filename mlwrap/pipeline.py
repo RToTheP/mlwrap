@@ -55,7 +55,7 @@ def get_pipeline(config: MLConfig, X_train, X_test, y_train, y_test):
 
     # transformers
     column_transformer = encoders.get_column_transformer(config, X_train)
-    model_feature_encoder = encoders.get_model_feature_encoder(config, y_train)      
+    model_feature_encoder = encoders.get_model_feature_encoder(config, y_train)
     steps.append(("column_transformer", column_transformer))
 
     # model/estimator algorithm
@@ -71,6 +71,6 @@ def get_pipeline(config: MLConfig, X_train, X_test, y_train, y_test):
         steps=steps,
         config=config,
         model_feature_encoder=model_feature_encoder,
-        explainer=explainer
+        explainer=explainer,
     )
     return pipeline

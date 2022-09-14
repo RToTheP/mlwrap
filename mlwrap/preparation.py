@@ -8,6 +8,7 @@ from sklearn.utils import class_weight
 from mlwrap.enums import ProblemType
 from mlwrap.config import MLConfig
 
+
 def split_data(
     data: pd.DataFrame,
     model_feature_id: str,
@@ -30,6 +31,7 @@ def split_data(
     y_train = X_train.pop(model_feature_id)
     y_test = X_test.pop(model_feature_id)
     return X_train, X_test, y_train, y_test
+
 
 def get_class_ratios(y) -> Dict[str, float]:
     value_counts_ = pd.value_counts(y)

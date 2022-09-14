@@ -12,6 +12,7 @@ def iris() -> datasets.IrisDataset:
 def diabetes() -> datasets.DiabetesDataset:
     return datasets.DiabetesDataset()
 
+
 @pytest.fixture
 def titanic() -> datasets.TitanicDataset():
     return datasets.TitanicDataset()

@@ -49,6 +49,7 @@ def get_resampler(df, config: MLConfig, problem_type: ProblemType):
 
     return resampler
 
+
 def get_background_data(
     data: Union[pd.DataFrame, np.ndarray], config: MLConfig, sample_type: str = "random"
 ) -> np.ndarray:

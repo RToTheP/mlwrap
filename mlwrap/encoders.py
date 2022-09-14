@@ -149,10 +149,13 @@ class Convert1dTo2d(TransformerMixin):
 
 
 def to_numpy(X):
-    return X.to_numpy() if hasattr(X, 'to_numpy') else X
+    return X.to_numpy() if hasattr(X, "to_numpy") else X
+
 
 def _is_categorical(dtype):
-    return pd.api.types.is_object_dtype(dtype) or pd.api.types.is_categorical_dtype(dtype)
+    return pd.api.types.is_object_dtype(dtype) or pd.api.types.is_categorical_dtype(
+        dtype
+    )
 
 
 def get_column_transformer(config: MLConfig, X: pd.DataFrame) -> ColumnTransformer:
@@ -181,9 +184,10 @@ def get_column_transformer(config: MLConfig, X: pd.DataFrame) -> ColumnTransform
 
     return ColumnTransformer(transformers=transformers)
 
+
 def get_model_feature_encoder(config: MLConfig, y: pd.Series) -> Pipeline:
     column_data = to_numpy(y).reshape(-1, 1)
-    
+
     if config.model_feature_id in config.features:
         feature = config.features[config.model_feature_id]
     elif _is_categorical(y.dtype):
@@ -194,8 +198,8 @@ def get_model_feature_encoder(config: MLConfig, y: pd.Series) -> Pipeline:
     return Pipeline(
         steps=[
             (
-                    "1dTo2d",
-                    Convert1dTo2d(),
+                "1dTo2d",
+                Convert1dTo2d(),
             ),
             (
                 "model_feature_encoder",
@@ -204,6 +208,7 @@ def get_model_feature_encoder(config: MLConfig, y: pd.Series) -> Pipeline:
             ("flatten", FlattenOutputs(config.problem_type)),
         ]
     )
+
 
 def get_encoder(feature: Feature, column_data):
     # If no encoder is set then default to one based on the data type
