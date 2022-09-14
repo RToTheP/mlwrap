@@ -37,13 +37,13 @@ class TestTfidfEncoder(unittest.TestCase):
         encoder = encoders.TfidfEncoder(max_features=10)
         encoder.fit(self.data)
         self.assertCountEqual(
-            encoder.encoder.get_feature_names(), ["banana", "big", "bus", "yellow"]
+            encoder.encoder.get_feature_names_out(), ["banana", "big", "bus", "yellow"]
         )
 
         # Test Case 2: Ensure max features get's most frequent words
         encoder = encoders.TfidfEncoder(max_features=2)
         encoder.fit(self.data)
-        self.assertCountEqual(encoder.encoder.get_feature_names(), ["big", "yellow"])
+        self.assertCountEqual(encoder.encoder.get_feature_names_out(), ["big", "yellow"])
 
     def test_transform(self):
         # Test Case 1: Verify that upon inference, it respects the vocab size of the training data
