@@ -597,7 +597,7 @@ name = "scikeras"
 version = "0.9.0"
 description = "Scikit-Learn API wrapper for Keras."
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.7.0,<3.11.0"
 
 [package.dependencies]
@@ -929,13 +929,13 @@ testing = ["func-timeout", "jaraco.itertools", "pytest (>=6)", "pytest-black (>=
 
 [extras]
 lightgbm = ["lightgbm"]
-tensorflow = ["tensorflow-aarch64", "tensorflow", "tensorflow-io-gcs-filesystem"]
+tensorflow = ["tensorflow-aarch64", "tensorflow", "tensorflow-io-gcs-filesystem", "scikeras"]
 xai = ["shap", "numba"]
 
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.11"
-content-hash = "665685fee1d30d92c3c978005d9d7803dca5a99b286f840e3185f93332367dde"
+content-hash = "4b0ef58947bee47e6264e5db532941704a7dfb7f79f342bbe9269bef793089ab"
 
 [metadata.files]
 absl-py = [
