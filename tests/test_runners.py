@@ -1,14 +1,48 @@
 import logging
-import unittest
 import pandas as pd
 
 from mlwrap import io
-from mlwrap.config import MLConfig
-from mlwrap.enums import AlgorithmType, ProblemType, ScoreType
+from mlwrap.config import Feature, MLConfig
+from mlwrap.enums import AlgorithmType, FeatureType, ProblemType, ScoreType
 from mlwrap.runners import train
-from tests.datasets import DiabetesDataset, IrisDataset
+from tests.datasets import DiabetesDataset, IrisDataset, TitanicDataset
 
 logging.getLogger().setLevel(logging.DEBUG)
+
+
+def test_train_lightgbm_decision_tree_titanic(titanic: TitanicDataset):
+    # arrange
+    c = titanic.X.columns
+    # columns_to_keep = ['pclass', 'name', 'sex', 'age', 'sibsp', 'parch', 'ticket', 'fare' 'cabin', 'embarked', 'boat',
+    #    'body', 'home.dest'] 
+    columns_to_keep = ['pclass', 'sex', 'age', 'sibsp', 'parch', 'ticket', 'fare' 'embarked', 'boat',
+       'body', 'home.dest'] 
+    df = pd.concat([titanic.X, titanic.y], axis=1)
+
+    features = {
+    #    'PassengerId' : Feature(id='PassengerId', feature_type=FeatureType.Categorical), 
+       'survived' : Feature(id='survived', feature_type=FeatureType.Categorical), 
+       'pclass' : Feature(id='pclass', feature_type=FeatureType.Categorical), 
+    #    'name': Feature(id='name', feature_type=FeatureType.Categorical), 
+       'sex': Feature(id='sex', feature_type=FeatureType.Categorical), 
+       'age': Feature(id='age', feature_type=FeatureType.Continuous), 
+       'sibsp': Feature(id='sibsp', feature_type=FeatureType.Categorical),
+       # 'parch': Feature(id='parch', feature_type=FeatureType.Categorical), 
+       #'Ticket': Feature(id='Ticket', feature_type=FeatureType.Categorical), 
+       'fare': Feature(id='fare', feature_type=FeatureType.Continuous), 
+       'embarked': Feature(id='embarked', feature_type=FeatureType.Categorical)
+    }
+    config = MLConfig(
+        algorithm_type=AlgorithmType.LightGBMDecisionTree,
+        features=features,
+        model_feature_id='survived',
+    )
+
+    # act
+    result = train(config=config, df=df)
+
+    # assert
+    assert result.model is not None
 
 
 def test_train_lightgbm_decision_tree_regression(diabetes: DiabetesDataset):

@@ -1,4 +1,4 @@
-from sklearn.datasets import load_diabetes, load_iris
+from sklearn.datasets import load_diabetes, load_iris, fetch_openml
 
 from mlwrap.config import Feature
 from mlwrap.enums import FeatureType
@@ -36,3 +36,8 @@ class DiabetesDataset:
             id=model_feature_id, feature_type=FeatureType.Continuous
         ),
     }
+
+class TitanicDataset:
+    X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True)
+    model_feature_id = "survived"
+    

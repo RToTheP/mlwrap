@@ -45,8 +45,8 @@ def get_pipeline(config: MLConfig, X_train, X_test, y_train, y_test):
     steps = []
 
     # cleaning
-    variance_threshold = VarianceThresholdWrapper()
-    steps.append(("variance_threshold", variance_threshold))
+    # variance_threshold = VarianceThresholdWrapper()
+    # steps.append(("variance_threshold", variance_threshold))
 
     # sampling
     resampler = sampling.get_resampler(X_train, config, config.problem_type)

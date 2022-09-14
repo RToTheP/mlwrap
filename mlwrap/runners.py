@@ -5,7 +5,6 @@ from mlwrap.config import MLConfig, TrainingResults
 from mlwrap.enums import ProblemType
 
 def train(config: MLConfig, df: pd.DataFrame) -> TrainingResults:
-    # process the data - can we use an sklearn pipeline for this?
     # split the data
 
     X_train, X_test, y_train, y_test = preparation.split_data(
@@ -16,11 +15,7 @@ def train(config: MLConfig, df: pd.DataFrame) -> TrainingResults:
         problem_type=config.problem_type,
     )
 
-    # pipeline should:
-    # - clean the data
-    # - resample the data
-    # - fit and transform the data using encoders
-    # - fit a model
+    # pipeline 
 
     model = pipeline.get_pipeline(config, X_train, X_test, y_train, y_test)
 

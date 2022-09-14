@@ -122,8 +122,11 @@ def calculate_scores(
     y_prob=None
 ) -> Dict[Type[ScoreType], float]:
     # evaluate metrics
-    n_total_features = len(model.named_steps["variance_threshold"].feature_names_in_)
-    n_active_features = len(model.named_steps["variance_threshold"].get_feature_names_out())
+    # n_total_features = len(model.named_steps["variance_threshold"].feature_names_in_)
+    # n_active_features = len(model.named_steps["variance_threshold"].get_feature_names_out())
+    #  cleaning isn't working at the moment so let's pass on this
+    n_total_features = 0
+    n_active_features = n_total_features
     n_inactive_features = n_total_features - n_active_features
 
     algorithm = model.named_steps["algorithm"]
