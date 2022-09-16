@@ -58,67 +58,58 @@ class TestTfidfEncoder(unittest.TestCase):
         self.assertIsInstance(encoded_features, pd.DataFrame)
 
 
-def test_get_column_transformer_from_features_iris(iris: IrisDataset):
-    config = MLConfig(
-        model_feature_id=iris.model_feature_id,
-        problem_type=ProblemType.Classification,
-        features=iris.features,
-    )
-    column_transformer = encoders.get_column_transformer(config, iris.X)
+def test_get_column_transformer_iris(iris: IrisDataset):
+    column_transformer = encoders.get_column_transformer(MLConfig(), iris.X)
 
     transformer_ids = [t[0] for t in column_transformer.transformers]
-    for feature in iris.features.values():
-        if feature.id == iris.model_feature_id:
-            continue
-        assert feature.id in transformer_ids
-
-    # difficult to assert on the transformer type so lets just check that the transform works
-    Xt = column_transformer.fit_transform(iris.X)
-    assert Xt is not None
-    assert all(iris.X != Xt)
-
-
-def test_get_column_transformer_from_dataframe_iris(iris: IrisDataset):
-    config = MLConfig(
-        model_feature_id=iris.model_feature_id,
-        problem_type=ProblemType.Classification,
-    )
-    column_transformer = encoders.get_column_transformer(config, iris.X)
-
-    transformer_ids = [t[0] for t in column_transformer.transformers]
-    for feature in iris.features.values():
-        if feature.id == iris.model_feature_id:
-            continue
-        assert feature.id in transformer_ids
+    assert all(transformer_ids == iris.X.columns)
 
     # difficult to assert on the transformer type so lets just check that the transform works
     Xt = column_transformer.fit_transform(iris.X)
     assert Xt is not None
     assert (iris.X != Xt).all(axis=None)
 
+def test_get_column_transformer_with_override_iris(iris: IrisDataset):
+    encoders_ = {'petal length (cm)' : encoders.FeatureHasherWrapper() }
+    column_transformer = encoders.get_column_transformer(MLConfig(encoders=encoders_), iris.X)
 
-def test_get_model_feature_encoder_from_features_classification(iris: IrisDataset):
-    y = iris.y.astype("category")
-    y = iris.target_names[y]
+    transformer_ids = [t[0] for t in column_transformer.transformers]
+    assert all(transformer_ids == iris.X.columns)
+
+    # check that the override works
+    for t in column_transformer.transformers:
+        if t[0] == 'petal length (cm)':
+            assert isinstance(t[1].named_steps['encoder'], encoders.FeatureHasherWrapper)
+
+def test_get_model_feature_encoder_classification(iris: IrisDataset):
 
     config = MLConfig(
         model_feature_id=iris.model_feature_id,
         problem_type=ProblemType.Classification,
-        features=iris.features,
     )
-    model_feature_encoder = encoders.get_model_feature_encoder(config, y)
+    model_feature_encoder = encoders.get_model_feature_encoder(config, iris.y)
 
-    yt = model_feature_encoder.fit_transform(y)
+    yt = model_feature_encoder.fit_transform(iris.y)
     assert yt is not None
-    assert y != yt
+    assert (iris.y == yt).all(axis=None)
+
+def test_get_model_feature_encoder_with_overrides_classification(iris: IrisDataset):
+    encoders_ = {'target' : encoders.FeatureHasherWrapper() }
+    config = MLConfig(
+        model_feature_id=iris.model_feature_id,
+        problem_type=ProblemType.Classification,
+        encoders=encoders_
+    )
+    model_feature_encoder = encoders.get_model_feature_encoder(config, iris.y)
+
+    assert isinstance(model_feature_encoder.named_steps['encoder'], encoders.FeatureHasherWrapper)
 
 
-def test_get_model_feature_encoder_from_features_regression(diabetes: DiabetesDataset):
+def test_get_model_feature_encoder_regression(diabetes: DiabetesDataset):
 
     config = MLConfig(
         model_feature_id=diabetes.model_feature_id,
-        problem_type=ProblemType.Classification,
-        features=diabetes.features,
+        problem_type=ProblemType.Regression,
     )
     model_feature_encoder = encoders.get_model_feature_encoder(config, diabetes.y)
 

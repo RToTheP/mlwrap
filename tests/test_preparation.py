@@ -10,7 +10,7 @@ def test_split_data(iris: IrisDataset):
     # arrange
     df = pd.concat([iris.X, iris.y], axis=1)
 
-    config = MLConfig(features=iris.features, model_feature_id=iris.model_feature_id)
+    config = MLConfig(model_feature_id=iris.model_feature_id)
 
     # act
     X_train, X_test, y_train, y_test = preparation.split_data(
@@ -27,7 +27,7 @@ def test_split_data(iris: IrisDataset):
 
 def test_split_data_no_data(iris: IrisDataset):
     # arrange
-    config = MLConfig(features=iris.features, model_feature_id=iris.model_feature_id)
+    config = MLConfig(model_feature_id=iris.model_feature_id)
 
     # act and assert
     with pytest.raises(ValueError):

@@ -1,42 +1,21 @@
-import pandas as pd
 from sklearn.datasets import load_diabetes, load_iris, fetch_openml
-
-from mlwrap.config import Feature
-from mlwrap.enums import FeatureType
 
 
 class IrisDataset:
     dataset = load_iris(as_frame=True)
-    X = dataset["data"]
-    y = dataset["target"]
     target_names = dataset["target_names"]
     target_count = len(dataset["target_names"])
+    X = dataset["data"]
+    y = dataset["target"].astype("category")
+    
     model_feature_id = "target"
-    features = {
-        **{
-            name: Feature(id=name, feature_type=FeatureType.Continuous)
-            for name in dataset["feature_names"]
-        },
-        model_feature_id: Feature(
-            id=model_feature_id, feature_type=FeatureType.Categorical
-        ),
-    }
-
+    
 
 class DiabetesDataset:
     dataset = load_diabetes(as_frame=True)
     X = dataset["data"]
     y = dataset["target"]
     model_feature_id = "target"
-    features = {
-        **{
-            name: Feature(id=name, feature_type=FeatureType.Continuous)
-            for name in dataset["feature_names"]
-        },
-        model_feature_id: Feature(
-            id=model_feature_id, feature_type=FeatureType.Continuous
-        ),
-    }
 
 
 class TitanicDataset:

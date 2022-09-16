@@ -2,9 +2,9 @@ import logging
 import pandas as pd
 import pytest
 
-from mlwrap import io, runners
-from mlwrap.config import Feature, MLConfig
-from mlwrap.enums import AlgorithmType, FeatureType, ProblemType
+from mlwrap import io, runners, utils
+from mlwrap.config import MLConfig
+from mlwrap.enums import AlgorithmType, ProblemType
 from tests.datasets import DiabetesDataset, IrisDataset, TitanicDataset
 
 logging.getLogger().setLevel(logging.DEBUG)
@@ -28,23 +28,12 @@ def test_train_lightgbm_decision_tree_titanic(titanic: TitanicDataset):
     ]
     df = pd.concat([titanic.X, titanic.y], axis=1)
 
-    features = {
-        #    'PassengerId' : Feature(id='PassengerId', feature_type=FeatureType.Categorical),
-        "survived": Feature(id="survived", feature_type=FeatureType.Categorical),
-        "pclass": Feature(id="pclass", feature_type=FeatureType.Categorical),
-        #    'name': Feature(id='name', feature_type=FeatureType.Categorical),
-        "sex": Feature(id="sex", feature_type=FeatureType.Categorical),
-        "age": Feature(id="age", feature_type=FeatureType.Continuous),
-        "sibsp": Feature(id="sibsp", feature_type=FeatureType.Categorical),
-        # 'parch': Feature(id='parch', feature_type=FeatureType.Categorical),
-        #'Ticket': Feature(id='Ticket', feature_type=FeatureType.Categorical),
-        "fare": Feature(id="fare", feature_type=FeatureType.Continuous),
-        "embarked": Feature(id="embarked", feature_type=FeatureType.Categorical),
-    }
+    df = utils.to_category(df, ["survived", "pclass", "sex", "sibsp", "embarked"])
+
     config = MLConfig(
         algorithm_type=AlgorithmType.LightGBMDecisionTree,
-        features=features,
         model_feature_id="survived",
+        problem_type=ProblemType.Classification
     )
 
     # act
@@ -69,8 +58,8 @@ def test_e2e_regression(diabetes: DiabetesDataset, algorithm_type: AlgorithmType
 
     config = MLConfig(
         algorithm_type=algorithm_type,
-        features=diabetes.features,
         model_feature_id=diabetes.model_feature_id,
+        problem_type=ProblemType.Regression
     )
 
     # act
@@ -109,7 +98,6 @@ def test_e2e_classification(iris: IrisDataset, algorithm_type: AlgorithmType):
     # Switch the target column to be string labels to test that scoring is working properly
     df = pd.concat([iris.X, iris.y], axis=1)
     df.target = iris.target_names[df.target]
-    df.target = df.target.astype("category")
 
     config = MLConfig(
         algorithm_type=algorithm_type,
@@ -158,8 +146,8 @@ def test_xe2e_classification(iris: IrisDataset, algorithm_type: AlgorithmType):
     df = pd.concat([iris.X, iris.y], axis=1)
 
     config = MLConfig(
+        problem_type=ProblemType.Classification,
         algorithm_type=algorithm_type,
-        features=iris.features,
         model_feature_id=iris.model_feature_id,
         explain=True,
     )
@@ -173,7 +161,7 @@ def test_xe2e_classification(iris: IrisDataset, algorithm_type: AlgorithmType):
     assert df.shape[0] == results.scores["total_row_count"]
     assert results.scores["recall_weighted"] > 0.8
     assert (
-        len(config.features) - 1
+        iris.X.shape[1]
         == len(results.explanation_result.feature_importances) - 1
     )
     assert any(
@@ -200,7 +188,7 @@ def test_xe2e_classification(iris: IrisDataset, algorithm_type: AlgorithmType):
     assert len(predictions) == n_inferences
     assert iris.target_count == len(probabilities[0])
     assert predictions[0] in iris.y.unique()
-    assert len(config.features) - 1 == len(explanation_result.feature_importances) - 1
+    assert X_test.shape[1] == len(explanation_result.feature_importances) - 1
     assert any(value > 0 for value in explanation_result.feature_importances.values())
     max_key = max(explanation_result.feature_importances, key=explanation_result.feature_importances.get)
     assert max_key in ["petal length (cm)","petal width (cm)","sepal length (cm)"]
@@ -220,8 +208,8 @@ def test_xe2e_regression(diabetes: DiabetesDataset, algorithm_type: AlgorithmTyp
     df = pd.concat([diabetes.X, diabetes.y], axis=1)
 
     config = MLConfig(
+        problem_type=ProblemType.Regression,
         algorithm_type=algorithm_type,
-        features=diabetes.features,
         model_feature_id=diabetes.model_feature_id,
         explain=True,
     )
@@ -234,7 +222,7 @@ def test_xe2e_regression(diabetes: DiabetesDataset, algorithm_type: AlgorithmTyp
     assert df.shape[0] == results.scores["total_row_count"]
     assert results.scores["mean_abs_error"] < 70
     assert (
-        len(config.features) - 1
+        diabetes.X.shape[1]
         == len(results.explanation_result.feature_importances) - 1
     )
     assert any(
@@ -263,14 +251,14 @@ def test_xe2e_regression(diabetes: DiabetesDataset, algorithm_type: AlgorithmTyp
     # assert
     assert len(predictions) == n_inferences
     assert pytest.approx(predictions[0], 20) == diabetes.y[0]
-    assert len(config.features) - 1 == len(explanation_result.feature_importances) - 1
+    assert X_test.shape[1] == len(explanation_result.feature_importances) - 1
     assert any(value > 0 for value in explanation_result.feature_importances.values())
 
     max_feature_importance = max(
         explanation_result.feature_importances,
         key=explanation_result.feature_importances.get,
     )
-    assert max_feature_importance in ["s1", "s5", "bmi"]
+    assert max_feature_importance in ["s1", "s3", "s5", "bmi"]
 
 
 def test_clean(titanic: TitanicDataset):

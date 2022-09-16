@@ -9,8 +9,8 @@ from tensorflow import keras
 from scikeras.wrappers import KerasClassifier, KerasRegressor
 from sklearn.utils import class_weight
 
-from mlwrap.config import MLConfig, TrainingResults
-from mlwrap.enums import ProblemType, AlgorithmType
+from mlwrap.config import MLConfig
+from mlwrap.enums import ProblemType
 
 
 def get_model(problem_type: ProblemType, meta):

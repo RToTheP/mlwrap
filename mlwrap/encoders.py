@@ -1,5 +1,4 @@
 import abc
-from collections import Counter
 import math
 
 import numpy as np
@@ -12,8 +11,8 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, MinMaxScaler
 
 from mlwrap import utils
-from mlwrap.config import Feature, MLConfig
-from mlwrap.enums import EncoderType, FeatureType, ProblemType
+from mlwrap.config import MLConfig
+from mlwrap.enums import ProblemType
 
 
 class EncoderBase(metaclass=abc.ABCMeta):
@@ -64,16 +63,10 @@ class CyclicalEncoder(EncoderBase):
         return inv
 
 
-class FeatureHasherWrapper(EncoderBase):
-    def __init__(self, feature_hasher):
-        self.feature_hasher = feature_hasher
-
-    def fit(self, data):
-        return
-
-    def transform(self, data):
-        hashed_data = self.feature_hasher.transform(data)
-        return hashed_data.toarray()
+class FeatureHasherWrapper(FeatureHasher):
+    def transform(self, raw_X):
+        Xt = super().transform(raw_X)
+        return Xt.toarray()
 
 
 class TfidfEncoder(EncoderBase):
@@ -152,16 +145,11 @@ class Convert1dTo2d(TransformerMixin):
 def get_column_transformer(config: MLConfig, X: pd.DataFrame) -> ColumnTransformer:
     transformers = []
     # columns in training data
-    for feature_id in X.columns:
-        column_data = utils.to_numpy(X[feature_id]).reshape(-1, 1)
-        if feature_id in config.features:
-            feature = config.features[feature_id]
-        elif utils.is_categorical(X.dtypes[feature_id]):
-            feature = Feature(feature_id, feature_type=FeatureType.Categorical)
+    for c in X.columns:
+        if config.encoders is not None and c in config.encoders:
+            encoder = config.encoders[c]
         else:
-            feature = Feature(feature_id, feature_type=FeatureType.Continuous)
-
-        encoder = get_encoder(feature, column_data)
+            encoder = get_encoder(X[c])
         pipeline = Pipeline(
             steps=[
                 (
@@ -171,21 +159,16 @@ def get_column_transformer(config: MLConfig, X: pd.DataFrame) -> ColumnTransform
                 ("encoder", encoder),
             ]
         )
-        transformers.append((feature_id, pipeline, feature_id))
+        transformers.append((c, pipeline, c))
 
     return ColumnTransformer(transformers=transformers)
 
 
 def get_model_feature_encoder(config: MLConfig, y: pd.Series) -> Pipeline:
-    column_data = utils.to_numpy(y).reshape(-1, 1)
-
-    if config.model_feature_id in config.features:
-        feature = config.features[config.model_feature_id]
-    elif utils.is_categorical(y.dtype):
-        feature = Feature(config.model_feature_id, feature_type=FeatureType.Categorical)
+    if config.encoders is not None and config.model_feature_id in config.encoders:
+        encoder = config.encoders[config.model_feature_id]
     else:
-        feature = Feature(config.model_feature_id, feature_type=FeatureType.Continuous)
-    encoder = get_encoder(feature, column_data)
+        encoder = get_encoder(y)
     return Pipeline(
         steps=[
             (
@@ -193,42 +176,33 @@ def get_model_feature_encoder(config: MLConfig, y: pd.Series) -> Pipeline:
                 Convert1dTo2d(),
             ),
             (
-                "model_feature_encoder",
+                "encoder",
                 encoder,
             ),
             ("flatten", FlattenOutputs(config.problem_type)),
         ]
     )
 
+def get_default_one_hot_encoder():
+    return OneHotEncoder(sparse=False, handle_unknown="infrequent_if_exist", min_frequency=0.1, max_categories=10)
 
-def get_encoder(feature: Feature, column_data):
+def get_default_min_max_scaler():
+    return MinMaxScaler()
+
+def get_default_tfidf_encoder(max_features: int = 10000):
+    return TfidfEncoder(max_features)
+
+def get_default_cyclical_encoder(cyclical_period: float):
+    return CyclicalEncoder(cyclical_period)
+
+def get_default_hash_encoder(column_data, hash_size_ratio):
+    label_count = np.unique(column_data)
+    hash_size = int(round(label_count * float(hash_size_ratio)))
+    return FeatureHasherWrapper(n_features=hash_size, input_type="string")
+
+
+def get_encoder(column_data):
     # If no encoder is set then default to one based on the data type
-    if feature.encoder_type is None:
-        if feature.feature_type == FeatureType.Categorical:
-            feature.encoder_type = EncoderType.OneHot
-        elif feature.feature_type == FeatureType.Continuous:
-            feature.encoder_type = EncoderType.MinMax
-        elif feature.feature_type == FeatureType.Text:
-            feature.encoder_type = EncoderType.Tfidf
-        else:
-            raise NotImplementedError(
-                f"Unsupported feature type {feature.feature_type}"
-            )
-
-    if feature.encoder_type == EncoderType.OneHot:
-        handle_unknown_ = "ignore" if feature.handle_unknown else "error"
-        return OneHotEncoder(sparse=False, handle_unknown=handle_unknown_)
-    elif feature.encoder_type == EncoderType.MinMax:
-        return MinMaxScaler()
-    elif feature.encoder_type == EncoderType.Tfidf:
-        return TfidfEncoder(feature.max_features)
-    elif feature.encoder_type == EncoderType.Cyclical:
-        return CyclicalEncoder(float(feature.cyclical_period))
-    elif feature.encoder_type == EncoderType.Hash:
-        label_count = len(Counter(column_data.flatten()))
-        hash_size = int(round(label_count * float(feature.hash_size_ratio)))
-        return FeatureHasherWrapper(
-            FeatureHasher(n_features=hash_size, input_type="string")
-        )
-    else:
-        raise NotImplementedError(f"Unsupported encoder type: {feature.encoder}")
+    if utils.is_categorical(column_data.dtype):
+        return get_default_one_hot_encoder()
+    return get_default_min_max_scaler()

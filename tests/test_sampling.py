@@ -1,11 +1,9 @@
-from imblearn.under_sampling import RandomUnderSampler
 from imblearn.over_sampling import SMOTE, SMOTENC
 import pandas as pd
-import pytest
 
-from mlwrap import sampling
-from mlwrap.config import Feature, MLConfig
-from mlwrap.enums import FeatureType, ProblemType
+from mlwrap import sampling, utils
+from mlwrap.config import MLConfig
+from mlwrap.enums import ProblemType
 from tests.datasets import IrisDataset
 
 
@@ -143,15 +141,10 @@ def test_resample_data():
         }
     )
 
-    features = [
-        Feature(id="Colour", feature_type=FeatureType.Categorical),
-        Feature(id="Temperature", feature_type=FeatureType.Continuous),
-        Feature(id="Weather", feature_type=FeatureType.Categorical),
-    ]
+    data = utils.to_category(data, ['Colour', 'Weather'])
 
     config = MLConfig(
         model_feature_id="Colour",
-        features=features,
         balance_data_via_resampling=True,
     )
 
