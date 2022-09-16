@@ -6,7 +6,7 @@ from mlwrap.explainers.base import get_feature_importances, ExplainerBase
 
 
 class LightGBMExplainer(ExplainerBase):
-    def fit(self, X, y) -> ExplanationResult:
+    def fit(self, X) -> ExplanationResult:
         # sum the coefficients for the features using the encoded feature indices
         feature_importances = get_feature_importances(
             self._column_transformer,

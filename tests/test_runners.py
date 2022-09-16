@@ -54,12 +54,21 @@ def test_train_lightgbm_decision_tree_titanic(titanic: TitanicDataset):
     assert result.model is not None
 
 
-def test_e2e_lightgbm_decision_tree_regression(diabetes: DiabetesDataset):
+@pytest.mark.parametrize(
+    "algorithm_type",
+    [
+        AlgorithmType.LightGBMDecisionTree,
+        AlgorithmType.KerasNeuralNetwork,
+        AlgorithmType.SklearnDecisionTree,
+        AlgorithmType.SklearnLinearModel,
+    ],
+)
+def test_e2e_regression(diabetes: DiabetesDataset, algorithm_type: AlgorithmType):
     # arrange
     df = pd.concat([diabetes.X, diabetes.y], axis=1)
 
     config = MLConfig(
-        algorithm_type=AlgorithmType.LightGBMDecisionTree,
+        algorithm_type=algorithm_type,
         features=diabetes.features,
         model_feature_id=diabetes.model_feature_id,
     )
@@ -69,7 +78,7 @@ def test_e2e_lightgbm_decision_tree_regression(diabetes: DiabetesDataset):
 
     # assert
     assert results.model is not None
-    assert results.scores['mean_abs_error'] < 70
+    assert results.scores["mean_abs_error"] < 70
 
     # save model to disk and then reload
     io.save_model(results.model, "test_data/model.pkl")
@@ -86,7 +95,16 @@ def test_e2e_lightgbm_decision_tree_regression(diabetes: DiabetesDataset):
     assert pytest.approx(predictions[0], 20) == diabetes.y[0]
 
 
-def test_e2e_train_sklearn_linear_classification(iris: IrisDataset):
+@pytest.mark.parametrize(
+    "algorithm_type",
+    [
+        AlgorithmType.LightGBMDecisionTree,
+        AlgorithmType.KerasNeuralNetwork,
+        AlgorithmType.SklearnDecisionTree,
+        AlgorithmType.SklearnLinearModel,
+    ],
+)
+def test_e2e_classification(iris: IrisDataset, algorithm_type: AlgorithmType):
     # arrange
     # Switch the target column to be string labels to test that scoring is working properly
     df = pd.concat([iris.X, iris.y], axis=1)
@@ -94,7 +112,7 @@ def test_e2e_train_sklearn_linear_classification(iris: IrisDataset):
     df.target = df.target.astype("category")
 
     config = MLConfig(
-        algorithm_type=AlgorithmType.SklearnLinearModel,
+        algorithm_type=algorithm_type,
         model_feature_id=iris.model_feature_id,
         problem_type=ProblemType.Classification,
         balance_data_via_resampling=True,
@@ -106,7 +124,7 @@ def test_e2e_train_sklearn_linear_classification(iris: IrisDataset):
 
     # assert
     assert results is not None
-    assert results.scores['recall_weighted'] > 0.8
+    assert results.scores["recall_weighted"] > 0.7
 
     # save model to disk and then reload
     io.save_model(results.model, "test_data/model.pkl")
@@ -116,21 +134,34 @@ def test_e2e_train_sklearn_linear_classification(iris: IrisDataset):
     # inference
     # act
     n_inferences = 10
-    predictions = model.predict(iris.X.head(n_inferences))
+    X_test = iris.X.head(n_inferences)
+    predictions = model.predict(X_test)
+    probabilities = model.predict_proba(X_test)
 
     # assert
     assert len(predictions) == n_inferences
+    assert iris.target_count == len(probabilities[0])
     assert predictions[0] in iris.target_names
 
 
-def test_e2e_lightgbm_decision_tree_classification(iris: IrisDataset):
+@pytest.mark.parametrize(
+    "algorithm_type",
+    [
+        AlgorithmType.LightGBMDecisionTree,
+        AlgorithmType.KerasNeuralNetwork,
+        AlgorithmType.SklearnDecisionTree,
+        AlgorithmType.SklearnLinearModel,
+    ],
+)
+def test_xe2e_classification(iris: IrisDataset, algorithm_type: AlgorithmType):
     # arrange
     df = pd.concat([iris.X, iris.y], axis=1)
 
     config = MLConfig(
-        algorithm_type=AlgorithmType.LightGBMDecisionTree,
+        algorithm_type=algorithm_type,
         features=iris.features,
         model_feature_id=iris.model_feature_id,
+        explain=True,
     )
 
     # training
@@ -139,7 +170,17 @@ def test_e2e_lightgbm_decision_tree_classification(iris: IrisDataset):
 
     # assert
     assert results.model is not None
-    assert results.scores['recall_weighted'] > 0.8
+    assert df.shape[0] == results.scores["total_row_count"]
+    assert results.scores["recall_weighted"] > 0.8
+    assert (
+        len(config.features) - 1
+        == len(results.explanation_result.feature_importances) - 1
+    )
+    assert any(
+        value > 0 for value in results.explanation_result.feature_importances.values()
+    )
+    max_key = max(results.explanation_result.feature_importances, key=results.explanation_result.feature_importances.get)
+    assert max_key in ["petal length (cm)","petal width (cm)"]
 
     # save model to disk and then reload
     io.save_model(results.model, "test_data/model.pkl")
@@ -152,115 +193,34 @@ def test_e2e_lightgbm_decision_tree_classification(iris: IrisDataset):
     X_test = iris.X.head(n_inferences)
     probabilities = model.predict_proba(X_test)
     predictions = model.predict(X_test)
+    explanations = model.explain(X_test, global_avg=False)
+    explanation_result = explanations[0]
 
     # assert
     assert len(predictions) == n_inferences
     assert iris.target_count == len(probabilities[0])
     assert predictions[0] in iris.y.unique()
+    assert len(config.features) - 1 == len(explanation_result.feature_importances) - 1
+    assert any(value > 0 for value in explanation_result.feature_importances.values())
+    max_key = max(explanation_result.feature_importances, key=explanation_result.feature_importances.get)
+    assert max_key in ["petal length (cm)","petal width (cm)","sepal length (cm)"]
 
 
-def test_e2e_keras_classification(iris):
-    # arrange
-    df = pd.concat([iris.X, iris.y], axis=1)
-    df.target = iris.target_names[df.target]
-    df.target = df.target.astype("category")
-
-    config = MLConfig(
-        algorithm_type=AlgorithmType.KerasNeuralNetwork,
-        features=iris.features,
-        model_feature_id=iris.model_feature_id,
-    )
-
-    # act
-    results = runners.train(config=config, df=df)
-
-    # assert
-    assert results.model is not None
-    assert results.scores['recall_weighted'] > 0.7
-
-    # save model to disk and then reload
-    io.save_model(results.model, "test_data/model.pkl")
-    del results
-    model = io.load_model("test_data/model.pkl")
-
-    # inference
-    # act
-    n_inferences = 10
-    probabilities = model.predict_proba(iris.X.head(n_inferences))
-    predictions = model.predict(iris.X.head(n_inferences))
-
-    # assert
-    assert len(predictions) == n_inferences
-    assert iris.target_count == len(probabilities[0])
-    assert predictions[0] in iris.target_names
-
-
-def test_e2e_keras_regression(diabetes: DiabetesDataset):
+@pytest.mark.parametrize(
+    "algorithm_type",
+    [
+        AlgorithmType.LightGBMDecisionTree,
+        AlgorithmType.KerasNeuralNetwork,
+        AlgorithmType.SklearnDecisionTree,
+        AlgorithmType.SklearnLinearModel,
+    ],
+)
+def test_xe2e_regression(diabetes: DiabetesDataset, algorithm_type: AlgorithmType):
     # arrange
     df = pd.concat([diabetes.X, diabetes.y], axis=1)
 
     config = MLConfig(
-        algorithm_type=AlgorithmType.KerasNeuralNetwork,
-        features=diabetes.features,
-        model_feature_id=diabetes.model_feature_id,
-    )
-
-    # act
-    results = runners.train(config=config, df=df)
-
-    # assert
-    assert results.model is not None
-    assert results.scores['mean_abs_error'] < 70
-
-    # save model to disk and then reload
-    io.save_model(results.model, "test_data/model.pkl")
-    del results
-    model = io.load_model("test_data/model.pkl")
-
-    # inference
-    # act
-    n_inferences = 10
-    predictions = model.predict(diabetes.X.head(n_inferences))
-
-    # assert
-    assert len(predictions) == n_inferences
-    assert pytest.approx(predictions[0], 20) == diabetes.y[0]
-
-
-def test_xtrain_lightgbm_decision_tree_classification(iris: IrisDataset):
-    # arrange
-    df = pd.concat([iris.X, iris.y], axis=1)
-
-    config = MLConfig(
-        algorithm_type=AlgorithmType.LightGBMDecisionTree,
-        features=iris.features,
-        model_feature_id=iris.model_feature_id,
-        explain=True,
-    )
-
-    # act
-    results = runners.train(config=config, df=df)
-
-    # assert
-    assert results.model is not None
-    assert df.shape[0] == results.scores['total_row_count']
-    assert results.scores['recall_weighted'] > 0.8
-    assert (
-        len(config.features) - 1
-        == len(results.explanation_result.feature_importances) - 1
-    )
-    assert any(
-        value > 0 for value in results.explanation_result.feature_importances.values()
-    )
-    assert results.explanation_result.feature_importances["petal length (cm)"] == 1
-
-
-def test_xtrain_lightgbm_decision_tree_regression(diabetes: DiabetesDataset):
-    # arrange
-    df = pd.concat([diabetes.X, diabetes.y], axis=1)
-
-    config = MLConfig(
-        algorithm_type=AlgorithmType.LightGBMDecisionTree,
+        algorithm_type=algorithm_type,
         features=diabetes.features,
         model_feature_id=diabetes.model_feature_id,
         explain=True,
@@ -271,8 +231,8 @@ def test_xtrain_lightgbm_decision_tree_regression(diabetes: DiabetesDataset):
 
     # assert
     assert results.model is not None
-    assert df.shape[0] == results.scores['total_row_count']
-    assert results.scores['mean_abs_error'] < 70
+    assert df.shape[0] == results.scores["total_row_count"]
+    assert results.scores["mean_abs_error"] < 70
     assert (
         len(config.features) - 1
         == len(results.explanation_result.feature_importances) - 1
@@ -285,7 +245,33 @@ def test_xtrain_lightgbm_decision_tree_regression(diabetes: DiabetesDataset):
         results.explanation_result.feature_importances,
         key=results.explanation_result.feature_importances.get,
     )
-    assert max_feature_importance in ["s5", "bmi"]
+    assert max_feature_importance in ["s1", "s3", "s5", "bmi"]
+
+    # save model to disk and then reload
+    io.save_model(results.model, "test_data/model.pkl")
+    del results
+    model = io.load_model("test_data/model.pkl")
+
+    # inference
+    # act
+    n_inferences = 10
+    X_test = diabetes.X.head(n_inferences)
+    predictions = model.predict(X_test)
+    explanations = model.explain(X_test, global_avg=False)
+    explanation_result = explanations[0]
+
+    # assert
+    assert len(predictions) == n_inferences
+    assert pytest.approx(predictions[0], 20) == diabetes.y[0]
+    assert len(config.features) - 1 == len(explanation_result.feature_importances) - 1
+    assert any(value > 0 for value in explanation_result.feature_importances.values())
+
+    max_feature_importance = max(
+        explanation_result.feature_importances,
+        key=explanation_result.feature_importances.get,
+    )
+    assert max_feature_importance in ["s1", "s5", "bmi"]
+
 
 def test_clean(titanic: TitanicDataset):
     df = pd.concat([titanic.X, titanic.y], axis=1)

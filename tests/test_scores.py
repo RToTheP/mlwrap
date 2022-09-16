@@ -12,7 +12,7 @@ logging.getLogger().setLevel(logging.DEBUG)
 
 def test_print_scores():
     # arrange
-    scores_ = {'recall_macro' : 0.5, 'recall_weighted' : 0.75}
+    scores_ = {"recall_macro": 0.5, "recall_weighted": 0.75}
     # act
     df = scores.print_scores(scores_)
     # assert
@@ -41,7 +41,7 @@ def test_get_scores_classification():
         problem_type=ProblemType.Classification, y=y, y_pred=y_pred, y_prob=y_prob
     )
 
-    assert pytest.approx(scores_['recall_weighted']) == 2 / 3
+    assert pytest.approx(scores_["recall_weighted"]) == 2 / 3
 
 
 def test_get_scores_regression():
@@ -49,4 +49,4 @@ def test_get_scores_regression():
     y_pred = np.array([0.4, 1.2, 2, 0.2])
 
     scores_ = scores.get_scores(problem_type=ProblemType.Regression, y=y, y_pred=y_pred)
-    assert pytest.approx(scores_['mean_abs_error']) == 0.2
+    assert pytest.approx(scores_["mean_abs_error"]) == 0.2

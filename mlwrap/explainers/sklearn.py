@@ -1,12 +1,14 @@
+from math import exp
 from typing import List, Type
 
+from mlwrap import utils
 from mlwrap.enums import ProblemType
 from mlwrap.config import ExplanationResult
 from mlwrap.explainers.base import get_feature_importances, ExplainerBase
 
 
 class SklearnLinearModelExplainer(ExplainerBase):
-    def fit(self, X, y) -> ExplanationResult:
+    def fit(self, X) -> ExplanationResult:
         # get the coefficients - this will differ depending on whether it is classification or regression
         coefficients = self._get_coefficients()
 
@@ -42,7 +44,7 @@ class SklearnLinearModelExplainer(ExplainerBase):
 
 
 class SklearnDecisionTreeExplainer(ExplainerBase):
-    def fit(self, X, y) -> ExplanationResult:
+    def fit(self, X) -> ExplanationResult:
         # sum the coefficients for the features using the encoded feature indices
         feature_importances = get_feature_importances(
             self._column_transformer,
@@ -52,14 +54,11 @@ class SklearnDecisionTreeExplainer(ExplainerBase):
 
     def explain(self, X) -> List[Type[ExplanationResult]]:
         # simple approach of multiplying the coefficients by the input and then partially summing
-        explanation_results: List[Type[ExplanationResult]] = list()
-        for input_ in X:
-            importances = input_ * self._model.feature_importances_
-            explanation_results.append(
-                ExplanationResult(
+        importances = X[:] * self._model.feature_importances_
+        importances = utils.to_numpy(importances)
+        explanation_results = [ExplanationResult(
                     feature_importances=get_feature_importances(
-                        self._column_transformer, importances=importances
+                        self._column_transformer, importances=importances[n]
                     )
-                )
-            )
+                ) for n in range(importances.shape[0])]
         return explanation_results

@@ -11,6 +11,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, MinMaxScaler
 
+from mlwrap import utils
 from mlwrap.config import Feature, MLConfig
 from mlwrap.enums import EncoderType, FeatureType, ProblemType
 
@@ -140,32 +141,22 @@ class Convert1dTo2d(TransformerMixin):
 
     def transform(self, X):
         if X.ndim == 1:
-            return to_numpy(X).reshape(-1, 1)
+            return utils.to_numpy(X).reshape(-1, 1)
 
     def inverse_transform(self, X):
         if X.ndim == 2 and X.shape[1] == 1:
-            X = to_numpy(X).flatten()
+            X = utils.to_numpy(X).flatten()
         return X
-
-
-def to_numpy(X):
-    return X.to_numpy() if hasattr(X, "to_numpy") else X
-
-
-def _is_categorical(dtype):
-    return pd.api.types.is_object_dtype(dtype) or pd.api.types.is_categorical_dtype(
-        dtype
-    )
 
 
 def get_column_transformer(config: MLConfig, X: pd.DataFrame) -> ColumnTransformer:
     transformers = []
     # columns in training data
     for feature_id in X.columns:
-        column_data = to_numpy(X[feature_id]).reshape(-1, 1)
+        column_data = utils.to_numpy(X[feature_id]).reshape(-1, 1)
         if feature_id in config.features:
             feature = config.features[feature_id]
-        elif _is_categorical(X.dtypes[feature_id]):
+        elif utils.is_categorical(X.dtypes[feature_id]):
             feature = Feature(feature_id, feature_type=FeatureType.Categorical)
         else:
             feature = Feature(feature_id, feature_type=FeatureType.Continuous)
@@ -186,11 +177,11 @@ def get_column_transformer(config: MLConfig, X: pd.DataFrame) -> ColumnTransform
 
 
 def get_model_feature_encoder(config: MLConfig, y: pd.Series) -> Pipeline:
-    column_data = to_numpy(y).reshape(-1, 1)
+    column_data = utils.to_numpy(y).reshape(-1, 1)
 
     if config.model_feature_id in config.features:
         feature = config.features[config.model_feature_id]
-    elif _is_categorical(y.dtype):
+    elif utils.is_categorical(y.dtype):
         feature = Feature(config.model_feature_id, feature_type=FeatureType.Categorical)
     else:
         feature = Feature(config.model_feature_id, feature_type=FeatureType.Continuous)

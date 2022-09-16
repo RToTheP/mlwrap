@@ -37,15 +37,20 @@ def train(config: MLConfig, df: pd.DataFrame) -> TrainingResults:
     )
 
     scores.print_scores(scores_)
-    scores.print_explanation_result(model.explanations_)
+
+    explanations = None
+    if config.explain:
+        explanations = model.explain(X_train, global_avg=True)
+    scores.print_explanation_result(explanations)
 
     # then get scores and append them to the results object
-    return TrainingResults(scores_, model, model.explanations_)
+    return TrainingResults(scores_, model, explanations)
+
 
 def clean(df: pd.DataFrame):
 
     pipeline_ = pipeline.get_cleaning_pipeline()
 
     df_clean = pipeline_.fit_transform(df)
-    
+
     return df_clean

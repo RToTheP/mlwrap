@@ -19,18 +19,18 @@ class ExplainerBase(metaclass=abc.ABCMeta):
         )
 
     @abc.abstractmethod
-    def fit(self, X, y) -> ExplanationResult:
+    def fit(self, X) -> ExplanationResult:
         raise NotImplementedError
 
     @abc.abstractmethod
     def explain(self, X) -> List[Type[ExplanationResult]]:
         raise NotImplementedError
 
-    def __init__(self, config: MLConfig, model, column_transformer) -> None:
+    def __init__(self, config: MLConfig, model, column_transformer, background_data) -> None:
         self._config = config
         self._model = model
         self._column_transformer = column_transformer
-        self._explainer = None
+        self._background_data = background_data
 
 
 def get_feature_importances(

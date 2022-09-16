@@ -8,50 +8,50 @@ from mlwrap.explainers.sklearn import (
 )
 
 
-def get_explainer(config: MLConfig, model, column_transformer):
+def get_explainer(config: MLConfig, model, column_transformer, background_data):
     if config.explainer_type is not None:
         if config.explainer_type == ExplainerType.SklearnLinearModel:
             return SklearnLinearModelExplainer(
-                config=config, model=model, column_transformer=column_transformer
+                config=config, model=model, column_transformer=column_transformer, background_data=background_data
             )
         elif config.explainer_type == ExplainerType.LightGBM:
             from mlwrap.explainers.lightgbm import LightGBMExplainer
 
             return LightGBMExplainer(
-                config=config, model=model, column_transformer=column_transformer
+                config=config, model=model, column_transformer=column_transformer, background_data=background_data
             )
 
         elif config.explainer_type == ExplainerType.TreeSHAP:
             from mlwrap.explainers.shap import TreeSHAP
 
             return TreeSHAP(
-                config=config, model=model, column_transformer=column_transformer
+                config=config, model=model, column_transformer=column_transformer, background_data=background_data
             )
 
         elif config.explainer_type == ExplainerType.GradientSHAP:
             from mlwrap.explainers.shap import GradientSHAP
 
             return GradientSHAP(
-                config=config, model=model, column_transformer=column_transformer
+                config=config, model=model, column_transformer=column_transformer, background_data=background_data
             )
 
         elif config.explainer_type == ExplainerType.LinearSHAP:
             from mlwrap.explainers.shap import LinearSHAP
 
             return LinearSHAP(
-                config=config, model=model, column_transformer=column_transformer
+                config=config, model=model, column_transformer=column_transformer, background_data=background_data
             )
 
         elif config.explainer_type == ExplainerType.SklearnDecisionTree:
             return SklearnDecisionTreeExplainer(
-                config=config, model=model, column_transformer=column_transformer
+                config=config, model=model, column_transformer=column_transformer, background_data=background_data
             )
 
     if config.algorithm_type == AlgorithmType.KerasNeuralNetwork:
         from mlwrap.explainers.shap import GradientSHAP
 
         return GradientSHAP(
-            config=config, model=model, column_transformer=column_transformer
+            config=config, model=model, column_transformer=column_transformer, background_data=background_data
         )
 
     elif config.algorithm_type in [
@@ -61,19 +61,19 @@ def get_explainer(config: MLConfig, model, column_transformer):
         from mlwrap.explainers.shap import TreeSHAP
 
         return TreeSHAP(
-            config=config, model=model, column_transformer=column_transformer
+            config=config, model=model, column_transformer=column_transformer, background_data=background_data
         )
 
     elif config.algorithm_type == AlgorithmType.SklearnLinearModel:
         from mlwrap.explainers.shap import LinearSHAP
 
         return LinearSHAP(
-            config=config, model=model, column_transformer=column_transformer
+            config=config, model=model, column_transformer=column_transformer, background_data=background_data
         )
 
     elif config.algorithm_type == AlgorithmType.SklearnDecisionTree:
         return SklearnDecisionTreeExplainer(
-            config=config, model=model, column_transformer=column_transformer
+            config=config, model=model, column_transformer=column_transformer, background_data=background_data
         )
 
     raise NotImplementedError

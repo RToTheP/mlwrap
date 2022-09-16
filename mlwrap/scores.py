@@ -39,11 +39,11 @@ def get_scores(
 
         # accuracy: (tp + tn) / (p + n)
         # # NOTE: weighted recall is equivalent to accuracy: (tp + tn) / (p + n)
-        scores['recall_weighted'] = accuracy_score(y, y_pred)
+        scores["recall_weighted"] = accuracy_score(y, y_pred)
 
         if n_actual_classes > 1:
             # NOTE: macro recall is equivalent to balanced accuracy (the average of recall on classes)
-            scores['recall_macro'] = balanced_accuracy_score(y, y_pred)
+            scores["recall_macro"] = balanced_accuracy_score(y, y_pred)
 
             # precision tp / (tp + fp)
             # recall: tp / (tp + fn)
@@ -86,10 +86,10 @@ def get_scores(
             roc_auc_weighted = roc_auc_weighted / sum(supports)
             pr_auc_macro = pr_auc_macro / n_actual_classes
             pr_auc_weighted = pr_auc_weighted / sum(supports)
-            scores['roc_auc_weighted'] = roc_auc_weighted
-            scores['roc_auc_macro'] = roc_auc_macro
-            scores['pr_auc_weighted'] = pr_auc_weighted
-            scores['pr_auc_macro'] = pr_auc_macro
+            scores["roc_auc_weighted"] = roc_auc_weighted
+            scores["roc_auc_macro"] = roc_auc_macro
+            scores["pr_auc_weighted"] = pr_auc_weighted
+            scores["pr_auc_macro"] = pr_auc_macro
         else:
             logging.warning(
                 f"There must be more than one class in both actuals and predictions"
@@ -100,11 +100,11 @@ def get_scores(
     elif problem_type == ProblemType.Regression:
         y_norm = y_pred / y
         y_ones = np.ones(y.shape)
-        scores['mean_abs_error'] = mean_absolute_error(y, y_pred)   
-        scores['median_abs_error'] = median_absolute_error(y, y_pred)
-        scores['norm_mean_abs_error'] = mean_absolute_error(y_ones, y_norm)   
-        scores['norm_median_abs_error'] = median_absolute_error(y_ones, y_norm)
-        scores['mean_squared_error'] = mean_squared_error(y, y_pred)
+        scores["mean_abs_error"] = mean_absolute_error(y, y_pred)
+        scores["median_abs_error"] = median_absolute_error(y, y_pred)
+        scores["norm_mean_abs_error"] = mean_absolute_error(y_ones, y_norm)
+        scores["norm_median_abs_error"] = median_absolute_error(y_ones, y_norm)
+        scores["mean_squared_error"] = mean_squared_error(y, y_pred)
     else:
         raise NotImplementedError
 
@@ -126,20 +126,16 @@ def calculate_scores(
     iterations = algorithms.get_iterations(config, algorithm)
 
     scores = {
-        'iterations': int(iterations),
-        'total_row_count': total_row_count,
-        'active_feature_count': n_active_features,
-        'inactive_feature_count': n_inactive_features,
+        "iterations": int(iterations),
+        "total_row_count": total_row_count,
+        "active_feature_count": n_active_features,
+        "inactive_feature_count": n_inactive_features,
     }
 
     if config.problem_type == ProblemType.Classification:
         class_ratios = preparation.get_class_ratios(y)
-        scores['majority_class_fraction'] = float(
-            list(class_ratios.values())[0]
-        )
-        scores['minority_class_fraction'] = (
-            float(list(class_ratios.values())[-1]),
-        )
+        scores["majority_class_fraction"] = float(list(class_ratios.values())[0])
+        scores["minority_class_fraction"] = (float(list(class_ratios.values())[-1]),)
 
     scores = {
         **scores,
@@ -154,7 +150,7 @@ def print_scores(scores: Dict[str, float]) -> pd.DataFrame:
     logging.info("Scores:")
     metrics = [s for s in scores]
     values = [[s] for s in scores.values()]
-    df = pd.DataFrame(data = { 'value' : values}, index=metrics)
+    df = pd.DataFrame(data={"value": values}, index=metrics)
     logging.info(df)
     return df
 
