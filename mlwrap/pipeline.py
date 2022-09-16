@@ -56,7 +56,7 @@ class MLWrapPipeline(Pipeline):
             return explainer.explain(X)
 
 
-def get_pipeline(config: MLConfig, X_train, X_test, y_train, y_test):
+def get_pipeline(config: MLConfig, X_train, y_train):
     """Function to build a model pipeline based on config"""
     steps = []
 
@@ -71,7 +71,10 @@ def get_pipeline(config: MLConfig, X_train, X_test, y_train, y_test):
     steps.append(("column_transformer", column_transformer))
 
     # model/estimator algorithm
-    algorithm = algorithms.get_algorithm(config, X_train, X_test, y_train, y_test)
+    if config.algorithm is None:
+        algorithm = algorithms.get_default_algorithm(config.problem_type)
+    else:
+        algorithm = config.algorithm
     steps.append(("algorithm", algorithm))
 
     pipeline = MLWrapPipeline(

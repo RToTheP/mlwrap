@@ -3,17 +3,64 @@
 import math
 import logging
 
-import numpy as np
-import tensorflow as tf
-from tensorflow import keras
-from scikeras.wrappers import KerasClassifier, KerasRegressor
-from sklearn.utils import class_weight
-
-from mlwrap.config import MLConfig
 from mlwrap.enums import ProblemType
+
+early_stopping_iterations: int = 50
+batch_size: int = 32
+epochs: int = 1000
+
+def get_keras(problem_type: ProblemType, adapt_class_weights: bool = False):
+    import tensorflow as tf
+    from tensorflow import keras
+    from scikeras.wrappers import KerasClassifier, KerasRegressor
+
+    # callbacks
+    callbacks = [
+        keras.callbacks.EarlyStopping(
+            monitor="loss", patience=early_stopping_iterations
+        ),
+        keras.callbacks.EarlyStopping(
+            monitor="val_loss",
+            mode="min",
+            patience=early_stopping_iterations,
+        ),
+    ]
+
+    # class weights
+    class_weights = None
+    if adapt_class_weights and problem_type == ProblemType.Classification:
+        class_weights = "balanced"
+
+    if problem_type == ProblemType.Regression:
+        return KerasRegressor(
+            get_model,
+            problem_type=problem_type,
+            batch_size=batch_size,
+            epochs=epochs,
+            validation_split=0.2,
+            callbacks=callbacks,
+            verbose=2,
+        )
+
+    if problem_type == ProblemType.Classification:
+        return KerasClassifier(
+            get_model,
+            problem_type=problem_type,
+            batch_size=batch_size,
+            epochs=epochs,
+            validation_split=0.2,
+            callbacks=callbacks,
+            class_weight=class_weights,
+            verbose=2,
+        )
+
+    raise NotImplementedError
 
 
 def get_model(problem_type: ProblemType, meta):
+    import tensorflow as tf
+    from tensorflow import keras
+    
     # create a new model from scratch
     n_features_in_ = meta["n_features_in_"]
     input_layer_nodes = n_features_in_
@@ -69,49 +116,3 @@ def get_model(problem_type: ProblemType, meta):
     logging.info(f"{problem_type} model with {outputLayerNodes} output layer nodes")
     model.summary()
     return model
-
-
-def get_keras(config: MLConfig, X_train, X_test, y_train, y_test):
-    # callbacks
-    callbacks = [
-        keras.callbacks.EarlyStopping(
-            monitor="loss", patience=config.early_stopping_iterations
-        ),
-        keras.callbacks.EarlyStopping(
-            monitor="val_loss",
-            mode="min",
-            patience=config.early_stopping_iterations,
-        ),
-    ]
-
-    # class weights
-    class_weights = None
-    if config.adapt_class_weights and config.problem_type == ProblemType.Classification:
-        class_weights = class_weight.compute_class_weight(
-            "balanced", classes=np.unique(y_train), y=y_train
-        )
-
-    if config.problem_type == ProblemType.Regression:
-        return KerasRegressor(
-            get_model,
-            problem_type=config.problem_type,
-            batch_size=config.model_training_batch_size,
-            epochs=config.maximum_training_iterations,
-            validation_split=0.2,
-            callbacks=callbacks,
-            verbose=2,
-        )
-
-    if config.problem_type == ProblemType.Classification:
-        return KerasClassifier(
-            get_model,
-            problem_type=config.problem_type,
-            batch_size=config.model_training_batch_size,
-            epochs=config.maximum_training_iterations,
-            validation_split=0.2,
-            callbacks=callbacks,
-            class_weight=class_weights,
-            verbose=2,
-        )
-
-    raise NotImplementedError

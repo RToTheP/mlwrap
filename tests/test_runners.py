@@ -1,16 +1,17 @@
 import logging
+from typing import Callable, Any
 import pandas as pd
 import pytest
 
-from mlwrap import io, runners, utils
+from mlwrap import algorithms, io, runners, utils
 from mlwrap.config import MLConfig
-from mlwrap.enums import AlgorithmType, ProblemType
+from mlwrap.enums import ProblemType
 from tests.datasets import DiabetesDataset, IrisDataset, TitanicDataset
 
 logging.getLogger().setLevel(logging.DEBUG)
 
 
-def test_train_lightgbm_decision_tree_titanic(titanic: TitanicDataset):
+def test_train_titanic(titanic: TitanicDataset):
     # arrange
     # columns_to_keep = ['pclass', 'name', 'sex', 'age', 'sibsp', 'parch', 'ticket', 'fare' 'cabin', 'embarked', 'boat',
     #    'body', 'home.dest']
@@ -31,7 +32,6 @@ def test_train_lightgbm_decision_tree_titanic(titanic: TitanicDataset):
     df = utils.to_category(df, ["survived", "pclass", "sex", "sibsp", "embarked"])
 
     config = MLConfig(
-        algorithm_type=AlgorithmType.LightGBMDecisionTree,
         model_feature_id="survived",
         problem_type=ProblemType.Classification
     )
@@ -44,20 +44,20 @@ def test_train_lightgbm_decision_tree_titanic(titanic: TitanicDataset):
 
 
 @pytest.mark.parametrize(
-    "algorithm_type",
+    "algorithm_fn",
     [
-        AlgorithmType.LightGBMDecisionTree,
-        AlgorithmType.KerasNeuralNetwork,
-        AlgorithmType.SklearnDecisionTree,
-        AlgorithmType.SklearnLinearModel,
+        algorithms.get_lightgbm,
+        algorithms.get_keras,
+        algorithms.get_sklearn_decision_tree,
+        algorithms.get_sklearn_linear_model,
     ],
 )
-def test_e2e_regression(diabetes: DiabetesDataset, algorithm_type: AlgorithmType):
+def test_e2e_regression(diabetes: DiabetesDataset, algorithm_fn: Callable[[ProblemType], Any]):
     # arrange
     df = pd.concat([diabetes.X, diabetes.y], axis=1)
 
     config = MLConfig(
-        algorithm_type=algorithm_type,
+        algorithm=algorithm_fn(ProblemType.Regression),
         model_feature_id=diabetes.model_feature_id,
         problem_type=ProblemType.Regression
     )
@@ -85,22 +85,22 @@ def test_e2e_regression(diabetes: DiabetesDataset, algorithm_type: AlgorithmType
 
 
 @pytest.mark.parametrize(
-    "algorithm_type",
+    "algorithm_fn",
     [
-        AlgorithmType.LightGBMDecisionTree,
-        AlgorithmType.KerasNeuralNetwork,
-        AlgorithmType.SklearnDecisionTree,
-        AlgorithmType.SklearnLinearModel,
+        algorithms.get_lightgbm,
+        algorithms.get_keras,
+        algorithms.get_sklearn_decision_tree,
+        algorithms.get_sklearn_linear_model,
     ],
 )
-def test_e2e_classification(iris: IrisDataset, algorithm_type: AlgorithmType):
+def test_e2e_classification(iris: IrisDataset, algorithm_fn: Callable[[ProblemType], Any]):
     # arrange
     # Switch the target column to be string labels to test that scoring is working properly
     df = pd.concat([iris.X, iris.y], axis=1)
     df.target = iris.target_names[df.target]
 
     config = MLConfig(
-        algorithm_type=algorithm_type,
+        algorithm=algorithm_fn(ProblemType.Classification),
         model_feature_id=iris.model_feature_id,
         problem_type=ProblemType.Classification,
         balance_data_via_resampling=True,
@@ -133,21 +133,21 @@ def test_e2e_classification(iris: IrisDataset, algorithm_type: AlgorithmType):
 
 
 @pytest.mark.parametrize(
-    "algorithm_type",
+    "algorithm_fn",
     [
-        AlgorithmType.LightGBMDecisionTree,
-        AlgorithmType.KerasNeuralNetwork,
-        AlgorithmType.SklearnDecisionTree,
-        AlgorithmType.SklearnLinearModel,
+        algorithms.get_lightgbm,
+        algorithms.get_keras,
+        algorithms.get_sklearn_decision_tree,
+        algorithms.get_sklearn_linear_model,
     ],
 )
-def test_xe2e_classification(iris: IrisDataset, algorithm_type: AlgorithmType):
+def test_xe2e_classification(iris: IrisDataset, algorithm_fn: Callable[[ProblemType], Any]):
     # arrange
     df = pd.concat([iris.X, iris.y], axis=1)
 
     config = MLConfig(
         problem_type=ProblemType.Classification,
-        algorithm_type=algorithm_type,
+        algorithm=algorithm_fn(ProblemType.Classification),
         model_feature_id=iris.model_feature_id,
         explain=True,
     )
@@ -191,25 +191,25 @@ def test_xe2e_classification(iris: IrisDataset, algorithm_type: AlgorithmType):
     assert X_test.shape[1] == len(explanation_result.feature_importances) - 1
     assert any(value > 0 for value in explanation_result.feature_importances.values())
     max_key = max(explanation_result.feature_importances, key=explanation_result.feature_importances.get)
-    assert max_key in ["petal length (cm)","petal width (cm)","sepal length (cm)"]
+    assert max_key in X_test.columns
 
 
 @pytest.mark.parametrize(
-    "algorithm_type",
+    "algorithm_fn",
     [
-        AlgorithmType.LightGBMDecisionTree,
-        AlgorithmType.KerasNeuralNetwork,
-        AlgorithmType.SklearnDecisionTree,
-        AlgorithmType.SklearnLinearModel,
+        algorithms.get_lightgbm,
+        algorithms.get_keras,
+        algorithms.get_sklearn_decision_tree,
+        algorithms.get_sklearn_linear_model,
     ],
 )
-def test_xe2e_regression(diabetes: DiabetesDataset, algorithm_type: AlgorithmType):
+def test_xe2e_regression(diabetes: DiabetesDataset, algorithm_fn: Callable[[ProblemType], Any]):
     # arrange
     df = pd.concat([diabetes.X, diabetes.y], axis=1)
 
     config = MLConfig(
         problem_type=ProblemType.Regression,
-        algorithm_type=algorithm_type,
+        algorithm=algorithm_fn(ProblemType.Regression),
         model_feature_id=diabetes.model_feature_id,
         explain=True,
     )

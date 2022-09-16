@@ -183,19 +183,19 @@ def get_model_feature_encoder(config: MLConfig, y: pd.Series) -> Pipeline:
         ]
     )
 
-def get_default_one_hot_encoder():
+def get_one_hot_encoder():
     return OneHotEncoder(sparse=False, handle_unknown="infrequent_if_exist", min_frequency=0.1, max_categories=10)
 
-def get_default_min_max_scaler():
+def get_min_max_scaler():
     return MinMaxScaler()
 
-def get_default_tfidf_encoder(max_features: int = 10000):
+def get_tfidf_encoder(max_features: int = 10000):
     return TfidfEncoder(max_features)
 
-def get_default_cyclical_encoder(cyclical_period: float):
+def get_cyclical_encoder(cyclical_period: float):
     return CyclicalEncoder(cyclical_period)
 
-def get_default_hash_encoder(column_data, hash_size_ratio):
+def get_hash_encoder(column_data, hash_size_ratio):
     label_count = np.unique(column_data)
     hash_size = int(round(label_count * float(hash_size_ratio)))
     return FeatureHasherWrapper(n_features=hash_size, input_type="string")
@@ -204,5 +204,5 @@ def get_default_hash_encoder(column_data, hash_size_ratio):
 def get_encoder(column_data):
     # If no encoder is set then default to one based on the data type
     if utils.is_categorical(column_data.dtype):
-        return get_default_one_hot_encoder()
-    return get_default_min_max_scaler()
+        return get_one_hot_encoder()
+    return get_min_max_scaler()

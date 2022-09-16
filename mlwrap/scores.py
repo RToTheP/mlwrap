@@ -123,7 +123,7 @@ def calculate_scores(
     n_inactive_features = n_total_features - n_active_features
 
     algorithm = model.named_steps["algorithm"]
-    iterations = algorithms.get_iterations(config, algorithm)
+    iterations = algorithms.get_iterations(algorithm)
 
     scores = {
         "iterations": int(iterations),

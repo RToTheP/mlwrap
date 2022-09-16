@@ -1,38 +1,36 @@
 """LightGBM Wrapper"""
 
-from mlwrap.config import MLConfig
-from mlwrap.enums import ProblemType, AlgorithmType
+from mlwrap.enums import ProblemType
 
+num_iterations: int = 1000
+num_leaves: int = 31
+max_depth: int = -1
+bagging_freq: float = 10
+bagging_fraction: int = 0.5
 
-def get_lightgbm(config: MLConfig):
+def get_lightgbm(problem_type: ProblemType, boosting_type = "gbdt", adapt_class_weights: bool = False):
     import lightgbm as lgb
 
-    boosting_type = None
-    if config.algorithm_type == AlgorithmType.LightGBMDecisionTree:
-        boosting_type = "gbdt"
-    elif config.algorithm_type == AlgorithmType.LightGBMRandomForest:
-        boosting_type = "rf"
-
-    if config.problem_type == ProblemType.Regression:
+    if problem_type == ProblemType.Regression:
         return lgb.LGBMRegressor(
             boosting_type=boosting_type,
-            num_iterations=config.maximum_training_iterations,
-            num_leaves=config.maximum_tree_leaves,
-            max_depth=config.maximum_tree_depth,
-            bagging_freq=config.model_training_bagging_frequency,
-            bagging_fraction=config.model_training_bagging_fraction,
+            num_iterations=num_iterations,
+            num_leaves=num_leaves,
+            max_depth=max_depth,
+            bagging_freq=bagging_freq,
+            bagging_fraction=bagging_fraction,
         )
 
-    if config.problem_type == ProblemType.Classification:
-        class_weight = "balanced" if config.adapt_class_weights else None
+    if problem_type == ProblemType.Classification:
+        class_weight = "balanced" if adapt_class_weights else None
         return lgb.LGBMClassifier(
             boosting_type=boosting_type,
             class_weight=class_weight,
-            num_iterations=config.maximum_training_iterations,
-            num_leaves=config.maximum_tree_leaves,
-            max_depth=config.maximum_tree_depth,
-            bagging_freq=config.model_training_bagging_frequency,
-            bagging_fraction=config.model_training_bagging_fraction,
+            num_iterations=num_iterations,
+            num_leaves=num_leaves,
+            max_depth=max_depth,
+            bagging_freq=bagging_freq,
+            bagging_fraction=bagging_fraction,
         )
-    else:
-        raise NotImplementedError
+    
+    raise NotImplementedError

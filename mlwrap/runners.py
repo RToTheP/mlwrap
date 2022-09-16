@@ -18,7 +18,7 @@ def train(config: MLConfig, df: pd.DataFrame) -> TrainingResults:
 
     # pipeline
 
-    model = pipeline.get_pipeline(config, X_train, X_test, y_train, y_test)
+    model = pipeline.get_pipeline(config, X_train, y_train)
 
     model.fit(X_train, y_train)
 
