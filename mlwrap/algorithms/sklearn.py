@@ -1,5 +1,6 @@
 """Module for Sklearn algorithms"""
 
+from sklearn.ensemble import HistGradientBoostingRegressor, HistGradientBoostingClassifier
 from sklearn.linear_model import LogisticRegression, LinearRegression
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 
@@ -30,3 +31,10 @@ def get_sklearn_linear_model(problem_type: ProblemType, adapt_class_weights: boo
         )
     
     raise NotImplementedError
+
+def get_sklearn_hist_grad_boosting_tree(problem_type: ProblemType):
+    
+    if problem_type == ProblemType.Regression:
+        return HistGradientBoostingRegressor(max_iter=max_iter)
+    if problem_type == ProblemType.Classification:
+        return HistGradientBoostingClassifier(max_iter=max_iter)

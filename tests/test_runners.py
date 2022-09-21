@@ -2,6 +2,8 @@ import logging
 from typing import Callable, Any
 import pandas as pd
 import pytest
+from sklearn.linear_model import LassoCV
+from sklearn.neighbors import KNeighborsClassifier
 
 from mlwrap import algorithms, io, runners, utils
 from mlwrap.config import MLConfig
@@ -50,6 +52,8 @@ def test_train_titanic(titanic: TitanicDataset):
         algorithms.get_keras,
         algorithms.get_sklearn_decision_tree,
         algorithms.get_sklearn_linear_model,
+        algorithms.get_sklearn_hist_grad_boosting_tree,
+        lambda _: LassoCV()
     ],
 )
 def test_e2e_regression(diabetes: DiabetesDataset, algorithm_fn: Callable[[ProblemType], Any]):
@@ -91,6 +95,8 @@ def test_e2e_regression(diabetes: DiabetesDataset, algorithm_fn: Callable[[Probl
         algorithms.get_keras,
         algorithms.get_sklearn_decision_tree,
         algorithms.get_sklearn_linear_model,
+        algorithms.get_sklearn_hist_grad_boosting_tree,
+        lambda _: KNeighborsClassifier()
     ],
 )
 def test_e2e_classification(iris: IrisDataset, algorithm_fn: Callable[[ProblemType], Any]):
