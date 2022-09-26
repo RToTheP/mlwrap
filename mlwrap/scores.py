@@ -104,7 +104,8 @@ def get_scores(
         scores["median_abs_error"] = median_absolute_error(y, y_pred)
         scores["norm_mean_abs_error"] = mean_absolute_error(y_ones, y_norm)
         scores["norm_median_abs_error"] = median_absolute_error(y_ones, y_norm)
-        scores["mean_squared_error"] = mean_squared_error(y, y_pred)
+        scores["rmse"] = mean_squared_error(y, y_pred, squared=False)
+        scores["norm_rmse"] = mean_squared_error(y_ones, y_norm, squared=False)
     else:
         raise NotImplementedError
 
