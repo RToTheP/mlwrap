@@ -150,7 +150,7 @@ def print_scores(scores: Dict[str, float]) -> pd.DataFrame:
         return None
     logging.info("Scores:")
     metrics = [s for s in scores]
-    values = [[s] for s in scores.values()]
+    values = [s for s in scores.values()]
     df = pd.DataFrame(data={"value": values}, index=metrics)
     logging.info(df)
     return df
