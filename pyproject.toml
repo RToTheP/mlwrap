@@ -8,7 +8,6 @@ authors = ["Ross Parkin <ross.parkin@armakuni.com>"]
 python = ">=3.11,<3.12"
 pandas = "^2.2.0"
 scikit-learn = "^1.4.0"
-imblearn = "^0.0"
 lightgbm = { version = "^4.3.0", optional = true }
 shap = "0.44.1"
 numba = { version = "^0.58.1", optional = true }
@@ -18,6 +17,7 @@ numpy = "^1.26.3"
 scikeras = { version = "^0.12.0", optional = true }
 tensorflow-io-gcs-filesystem = { version = "0.31.0", optional = true }
 feature-engine = "^1.6.2"
+imbalanced-learn = "^0.12.0"
 
 [tool.poetry.dev-dependencies]
 black = "^24.1.1"
