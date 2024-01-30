@@ -22,8 +22,10 @@ jobs:
           python-version: "3.11.7"
       - name: Check platform
         run: python -c "import platform; print(platform.machine())"
-      - name: Set up poetry
-        uses: Gr1N/setup-poetry@v7
+      - name: Install Poetry
+        run: |
+          python -m pip install --upgrade pip wheel
+          curl -sSL https://install.python-poetry.org | python -
       - uses: actions/cache@v2
         with:
           path: ~/.cache/pypoetry/virtualenvs
