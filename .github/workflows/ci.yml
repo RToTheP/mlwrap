@@ -2,43 +2,42 @@ name: CI
 on:
   push:
     branches:
-      - '**'
+      - "**"
   pull_request:
     branches:
-      - '**'
+      - "**"
 
 permissions:
   contents: read
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python 3.9.10
-      uses: actions/setup-python@v3
-      with:
-        python-version: "3.9.10"
-    - name: Check platform
-      run: python -c "import platform; print(platform.machine())"
-    - name: Set up poetry
-      uses: Gr1N/setup-poetry@v7
-    - uses: actions/cache@v2
-      with:
-        path: ~/.cache/pypoetry/virtualenvs
-        key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
-    - run: poetry --version
-    - name: Install OS dependencies
-      run: |
-        sudo apt-get update && export DEBIAN_FRONTEND=noninteractive
-        sudo apt-get -y install --no-install-recommends \
-          build-essential \
-          libedit-dev
-    - name: Install python libs
-      run: |
-        poetry install -E tensorflow -E xai -E lightgbm
-    - name: Run unit tests
-      run: |
-        poetry run pytest
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.11.7"
+      - name: Check platform
+        run: python -c "import platform; print(platform.machine())"
+      - name: Set up poetry
+        uses: Gr1N/setup-poetry@v7
+      - uses: actions/cache@v2
+        with:
+          path: ~/.cache/pypoetry/virtualenvs
+          key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
+      - run: poetry --version
+      - name: Install OS dependencies
+        run: |
+          sudo apt-get update && export DEBIAN_FRONTEND=noninteractive
+          sudo apt-get -y install --no-install-recommends \
+            build-essential \
+            libedit-dev
+      - name: Install python libs
+        run: |
+          poetry install -E tensorflow -E xai -E lightgbm
+      - name: Run unit tests
+        run: |
+          poetry run pytest
