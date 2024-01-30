@@ -184,7 +184,7 @@ def get_model_feature_encoder(config: MLConfig, y: pd.Series) -> Pipeline:
     )
 
 def get_one_hot_encoder():
-    return OneHotEncoder(sparse=False, handle_unknown="infrequent_if_exist", min_frequency=0.1, max_categories=10)
+    return OneHotEncoder(sparse_output=False, handle_unknown="infrequent_if_exist", min_frequency=0.1, max_categories=10)
 
 def get_min_max_scaler():
     return MinMaxScaler()
