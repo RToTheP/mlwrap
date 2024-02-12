@@ -13,7 +13,7 @@ shap = "0.44.1"
 numba = { version = "^0.59.0", optional = true }
 tensorflow-aarch64 = { version = "2.15.0", markers = "platform_machine == 'aarch64'", optional = true }
 tensorflow = { version = "2.15.0", markers = "platform_machine == 'x86_64'", optional = true }
-numpy = "^1.26.3"
+numpy = "^1.26.4"
 scikeras = { version = "^0.12.0", optional = true }
 tensorflow-io-gcs-filesystem = { version = "0.31.0", optional = true }
 feature-engine = "^1.6.2"
