@@ -17,7 +17,7 @@ numpy = "^1.26.4"
 scikeras = { version = "^0.12.0", optional = true }
 tensorflow-io-gcs-filesystem = { version = "0.31.0", optional = true }
 feature-engine = "^1.6.2"
-imbalanced-learn = "^0.12.0"
+imbalanced-learn = "^0.12.2"
 
 [tool.poetry.dev-dependencies]
 black = "^24.2.0"
