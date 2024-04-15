@@ -20,7 +20,7 @@ feature-engine = "^1.6.2"
 imbalanced-learn = "^0.12.2"
 
 [tool.poetry.dev-dependencies]
-black = "^24.2.0"
+black = "^24.4.0"
 
 [tool.poetry.extras]
 tensorflow = ["tensorflow-aarch64", "tensorflow", "tensorflow-io-gcs-filesystem", "scikeras"]
