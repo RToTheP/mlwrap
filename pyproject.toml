@@ -6,7 +6,7 @@ authors = ["Ross Parkin <ross.parkin@armakuni.com>"]
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
-pandas = "^2.2.1"
+pandas = "^2.2.2"
 scikit-learn = "^1.4.1"
 lightgbm = { version = "^4.3.0", optional = true }
 shap = "0.45.0"
