@@ -595,19 +595,19 @@ devel = ["colorama", "json-spec", "jsonschema", "pylint", "pytest", "pytest-benc
 
 [[package]]
 name = "feature-engine"
-version = "1.6.2"
-description = "Feature engineering package with Scikit-learn's fit transform functionality"
+version = "1.7.0"
+description = "Feature engineering and selection package with Scikit-learn's fit transform functionality"
 optional = false
-python-versions = ">=3.8.0"
+python-versions = ">=3.9.0"
 files = [
-    {file = "feature_engine-1.6.2-py2.py3-none-any.whl", hash = "sha256:1ebf790bb156f565f487f1658f4d2d4f323d013a0ed2665538b3fe0154c4a2b6"},
-    {file = "feature_engine-1.6.2.tar.gz", hash = "sha256:d365941d41f4dca1a83d021b0444df2db2230d843f943f0959aa21082d353e26"},
+    {file = "feature_engine-1.7.0-py2.py3-none-any.whl", hash = "sha256:fdfa8102fd53d7b47f5ff7a81194c2d4e962281b852ca4e1edc1b0a4909232dd"},
+    {file = "feature_engine-1.7.0.tar.gz", hash = "sha256:720dfd5679cdc8a3a9484c238fdcb3aab30d2cda44e7585ca5726db93fbe8d57"},
 ]
 
 [package.dependencies]
 numpy = ">=1.18.2"
-pandas = ">=1.0.3"
-scikit-learn = ">=1.0.0"
+pandas = ">=2.2.0"
+scikit-learn = ">=1.4.0"
 scipy = ">=1.4.1"
 statsmodels = ">=0.11.1"
 
@@ -3509,4 +3509,4 @@ xai = ["numba", "shap"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.12"
-content-hash = "d6de2b3f2baaf7d04f5a6a00f1e813357e96a413866be187963df6bb728df3a8"
+content-hash = "a5d17d8173e5a70d8e94ef23ac44658e88a6a036ebc73d7c0d590525fc5060d2"
