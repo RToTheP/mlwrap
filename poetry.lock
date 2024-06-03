@@ -816,13 +816,13 @@ files = [
 
 [[package]]
 name = "imbalanced-learn"
-version = "0.12.2"
+version = "0.12.3"
 description = "Toolbox for imbalanced dataset in machine learning."
 optional = false
 python-versions = "*"
 files = [
-    {file = "imbalanced-learn-0.12.2.tar.gz", hash = "sha256:a80c56cedcb07124f266be62d3a5d2ab5b5779909a7343fdf1b993479662f6c1"},
-    {file = "imbalanced_learn-0.12.2-py3-none-any.whl", hash = "sha256:8523b3ee6c10c1d25f6bebe3faa73a0bca28d1fed55e0435b49af22802cdc259"},
+    {file = "imbalanced-learn-0.12.3.tar.gz", hash = "sha256:5b00796a01419e9102bd425e27c319d58d1f6cf2dfa751e02ed7f4edf67c3c1b"},
+    {file = "imbalanced_learn-0.12.3-py3-none-any.whl", hash = "sha256:0e83e8226cb27dd567dff6aef0136bde0f54922ea1bd9d5f38f62701dc51a152"},
 ]
 
 [package.dependencies]
@@ -833,7 +833,7 @@ scipy = ">=1.5.0"
 threadpoolctl = ">=2.0.0"
 
 [package.extras]
-docs = ["keras (>=2.4.3)", "matplotlib (>=3.1.2)", "memory-profiler (>=0.57.0)", "numpydoc (>=1.5.0)", "pandas (>=1.0.5)", "pydata-sphinx-theme (>=0.13.3)", "seaborn (>=0.9.0)", "sphinx (>=6.0.0)", "sphinx-copybutton (>=0.5.2)", "sphinx-gallery (>=0.13.0)", "sphinxcontrib-bibtex (>=2.4.1)", "tensorflow (>=2.4.3)"]
+docs = ["keras (>=2.4.3)", "matplotlib (>=3.1.2)", "memory-profiler (>=0.57.0)", "numpydoc (>=1.5.0)", "pandas (>=1.0.5)", "pydata-sphinx-theme (>=0.13.3)", "seaborn (>=0.9.0)", "sphinx (>=6.0.0)", "sphinx-copybutton (>=0.5.2)", "sphinx-design (>=0.5.0)", "sphinx-gallery (>=0.13.0)", "sphinxcontrib-bibtex (>=2.4.1)", "tensorflow (>=2.4.3)"]
 examples = ["keras (>=2.4.3)", "matplotlib (>=3.1.2)", "pandas (>=1.0.5)", "seaborn (>=0.9.0)", "tensorflow (>=2.4.3)"]
 optional = ["keras (>=2.4.3)", "pandas (>=1.0.5)", "tensorflow (>=2.4.3)"]
 tests = ["black (>=23.3.0)", "flake8 (>=3.8.2)", "keras (>=2.4.3)", "mypy (>=1.3.0)", "pandas (>=1.0.5)", "pytest (>=5.0.1)", "pytest-cov (>=2.9.0)", "tensorflow (>=2.4.3)"]
@@ -3509,4 +3509,4 @@ xai = ["numba", "shap"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.12"
-content-hash = "5734a02df890f0fbf795e5c0dd3754e69595c7a9e4fb2c611a59f9a473056164"
+content-hash = "e0a7c19767423024ff435a700bc9356f16c7a44acb223b92840be8c5ee6350e3"
